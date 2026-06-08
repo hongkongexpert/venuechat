@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff, Check } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Spinner } from "@/components/ui/spinner"
 import { GoogleButton } from "@/components/auth/google-button"
@@ -12,6 +13,7 @@ export default function SignUpPage() {
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -68,6 +70,8 @@ export default function SignUpPage() {
             <input
               id="name"
               type="text"
+              autoFocus
+              autoComplete="name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full rounded-lg border border-[#e2dfde] bg-white px-3 py-2.5 text-base outline-none focus:border-[#9e0000] transition-colors"
@@ -82,6 +86,7 @@ export default function SignUpPage() {
               id="email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-[#e2dfde] bg-white px-3 py-2.5 text-base outline-none focus:border-[#9e0000] transition-colors"
@@ -92,16 +97,35 @@ export default function SignUpPage() {
             <label htmlFor="password" className="text-sm font-medium text-[#1a1c1c]">
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-[#e2dfde] bg-white px-3 py-2.5 text-base outline-none focus:border-[#9e0000] transition-colors"
-              placeholder="At least 6 characters"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-[#e2dfde] bg-white px-3 py-2.5 pr-11 text-base outline-none focus:border-[#9e0000] transition-colors"
+                placeholder="At least 6 characters"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-[#9a9999] hover:text-[#5e3f3a] transition-colors"
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+            <p
+              className={`flex items-center gap-1 text-xs transition-colors ${
+                password.length >= 6 ? "text-[#3f8f4f]" : "text-[#9a9999]"
+              }`}
+            >
+              <Check size={12} className={password.length >= 6 ? "opacity-100" : "opacity-40"} />
+              At least 6 characters
+            </p>
           </div>
 
           {error && (

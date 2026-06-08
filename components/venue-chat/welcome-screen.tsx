@@ -1,10 +1,16 @@
+"use client"
+
+import Link from "next/link"
+import { Bookmark, MessageSquare, ArrowRight } from "lucide-react"
 import { TrendingSection } from "./trending-section"
+import { useApp } from "./app-context"
 
 interface WelcomeScreenProps {
   onSearch?: (query: string) => void
 }
 
 export function WelcomeScreen({ onSearch }: WelcomeScreenProps) {
+  const { user, loadingUser } = useApp()
   return (
     <div className="flex flex-col gap-8 pt-16 md:pt-20 pb-2 w-full">
       {/* Centered logo mark */}
@@ -88,6 +94,48 @@ export function WelcomeScreen({ onSearch }: WelcomeScreenProps) {
       <div className="mt-2 md:hidden">
         <TrendingSection variant="scroll" onSelect={onSearch} />
       </div>
+
+      {/* Guest sign-in nudge */}
+      {!loadingUser && !user && (
+        <div className="mt-2 rounded-2xl border border-[#e8bdb6] bg-white p-5 md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-1.5">
+              <h2 className="text-base font-semibold text-[#1a1c1c]">
+                Save venues & track your enquiries
+              </h2>
+              <p className="text-sm text-[#5e3f3a] leading-relaxed max-w-md">
+                Create a free account to bookmark spaces, revisit past searches,
+                and keep every enquiry in one place.
+              </p>
+              <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1.5">
+                <span className="flex items-center gap-1.5 text-xs font-medium text-[#926e69]">
+                  <Bookmark size={13} className="text-[#9e0000]" />
+                  Save favourites
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-medium text-[#926e69]">
+                  <MessageSquare size={13} className="text-[#9e0000]" />
+                  Chat history
+                </span>
+              </div>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Link
+                href="/auth/sign-up"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+              >
+                Sign up free
+                <ArrowRight size={15} />
+              </Link>
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center rounded-full border border-[#e8bdb6] bg-white px-5 py-2.5 text-sm font-semibold text-[#9e0000] hover:bg-[#fdecea] transition-colors"
+              >
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
