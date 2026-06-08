@@ -305,3 +305,251 @@ export async function signOut(): Promise<ActionResult> {
   revalidatePath("/")
   return { ok: true }
 }
+
+/* --------------------------- Venue listings ----------------------------- */
+
+export interface VenueListing {
+  id: string
+  owner_id: string
+  name: string
+  slug: string
+  description: string | null
+  short_description: string | null
+  address: string | null
+  district: string | null
+  area: string | null
+  venue_type: string | null
+  capacity_min: number | null
+  capacity_max: number | null
+  price_min: number | null
+  price_max: number | null
+  contact_email: string | null
+  contact_phone: string | null
+  website_url: string | null
+  cover_image: string | null
+  status: string | null
+  is_featured: boolean | null
+  listing_type: string | null
+  badge_type: string | null
+  view_count: number | null
+  inquiry_count: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface VenueInput {
+  name: string
+  description?: string | null
+  short_description?: string | null
+  address?: string | null
+  district?: string | null
+  area?: string | null
+  venue_type?: string | null
+  capacity_min?: number | null
+  capacity_max?: number | null
+  price_min?: number | null
+  price_max?: number | null
+  contact_email?: string | null
+  contact_phone?: string | null
+  website_url?: string | null
+  cover_image?: string | null
+}
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 60)
+}
+
+export async function getMyVenues(): Promise<VenueListing[]> {
+  const { supabase, user } = await requireUser()
+  if (!user) return []
+  const { data } = await supabase
+    .from("venues")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false })
+  return (data as VenueListing[]) ?? []
+}
+
+export async function getMyVenue(id: string): Promise<VenueListing | null> {
+  const { supabase, user } = await requireUser()
+  if (!user) return null
+  const { data } = await supabase
+    .from("venues")
+    .select("*")
+    .eq("id", id)
+    .eq("owner_id", user.id)
+    .maybeSingle()
+  return (data as VenueListing) ?? null
+}
+
+export async function createVenue(
+  input: VenueInput,
+): Promise<ActionResult & { id?: string }> {
+  const { supabase, user } = await requireUser()
+  if (!user) return { ok: false, error: "auth" }
+  if (!input.name?.trim()) return { ok: false, error: "Name is required" }
+
+  const slug = `${slugify(input.name)}-${Math.random().toString(36).slice(2, 7)}`
+
+  const { data, error } = await supabase
+    .from("venues")
+    .insert({
+      owner_id: user.id,
+      name: input.name.trim(),
+      slug,
+      description: input.description || null,
+      short_description: input.short_description || null,
+      address: input.address || null,
+      district: input.district || null,
+      area: input.area || null,
+      venue_type: input.venue_type || null,
+      capacity_min: input.capacity_min ?? null,
+      capacity_max: input.capacity_max ?? null,
+      price_min: input.price_min ?? null,
+      price_max: input.price_max ?? null,
+      contact_email: input.contact_email || null,
+      contact_phone: input.contact_phone || null,
+      website_url: input.website_url || null,
+      cover_image: input.cover_image || null,
+      status: "draft",
+      listing_type: "free",
+    })
+    .select("id")
+    .single()
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/owner")
+  return { ok: true, id: data.id }
+}
+
+export async function updateVenue(
+  id: string,
+  input: VenueInput,
+): Promise<ActionResult> {
+  const { supabase, user } = await requireUser()
+  if (!user) return { ok: false, error: "auth" }
+  if (!input.name?.trim()) return { ok: false, error: "Name is required" }
+
+  const { error } = await supabase
+    .from("venues")
+    .update({
+      name: input.name.trim(),
+      description: input.description || null,
+      short_description: input.short_description || null,
+      address: input.address || null,
+      district: input.district || null,
+      area: input.area || null,
+      venue_type: input.venue_type || null,
+      capacity_min: input.capacity_min ?? null,
+      capacity_max: input.capacity_max ?? null,
+      price_min: input.price_min ?? null,
+      price_max: input.price_max ?? null,
+      contact_email: input.contact_email || null,
+      contact_phone: input.contact_phone || null,
+      website_url: input.website_url || null,
+      cover_image: input.cover_image || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("owner_id", user.id)
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/owner")
+  revalidatePath(`/owner/venues/${id}`)
+  return { ok: true }
+}
+
+export async function setVenueStatus(
+  id: string,
+  status: "draft" | "published",
+): Promise<ActionResult> {
+  const { supabase, user } = await requireUser()
+  if (!user) return { ok: false, error: "auth" }
+
+  // Publishing requires an active subscription
+  if (status === "published") {
+    const { data: venue } = await supabase
+      .from("venues")
+      .select("id")
+      .eq("id", id)
+      .eq("owner_id", user.id)
+      .maybeSingle()
+    if (!venue) return { ok: false, error: "Venue not found" }
+
+    const { data: sub } = await supabase
+      .from("venue_subscriptions")
+      .select("status")
+      .eq("venue_id", id)
+      .in("status", ["active", "trialing"])
+      .maybeSingle()
+    if (!sub) {
+      return {
+        ok: false,
+        error: "An active subscription is required to publish this listing.",
+      }
+    }
+  }
+
+  const { error } = await supabase
+    .from("venues")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("owner_id", user.id)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/owner")
+  revalidatePath(`/owner/venues/${id}`)
+  return { ok: true }
+}
+
+export async function deleteVenue(id: string): Promise<ActionResult> {
+  const { supabase, user } = await requireUser()
+  if (!user) return { ok: false, error: "auth" }
+  const { error } = await supabase
+    .from("venues")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", user.id)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/owner")
+  return { ok: true }
+}
+
+export interface VenueSubInfo {
+  status: string | null
+  tier_name: string | null
+  tier_slug: string | null
+  current_period_end: string | null
+  cancel_at_period_end: boolean | null
+}
+
+export async function getVenueSubscription(
+  venueId: string,
+): Promise<VenueSubInfo | null> {
+  const { supabase, user } = await requireUser()
+  if (!user) return null
+  const { data } = await supabase
+    .from("venue_subscriptions")
+    .select(
+      "status, current_period_end, cancel_at_period_end, subscription_tiers(name, slug)",
+    )
+    .eq("venue_id", venueId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!data) return null
+  const tier = (data as { subscription_tiers?: { name?: string; slug?: string } })
+    .subscription_tiers
+  return {
+    status: data.status,
+    tier_name: tier?.name ?? null,
+    tier_slug: tier?.slug ?? null,
+    current_period_end: data.current_period_end,
+    cancel_at_period_end: data.cancel_at_period_end,
+  }
+}
