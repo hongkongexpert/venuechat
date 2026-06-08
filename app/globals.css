@@ -1,0 +1,166 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* VenueChat Crimson Horizon Design System */
+  --vc-background: #f9f9f9;
+  --vc-surface: #f9f9f9;
+  --vc-surface-lowest: #ffffff;
+  --vc-surface-low: #f3f3f3;
+  --vc-surface-container: #eeeeee;
+  --vc-surface-high: #e8e8e8;
+  --vc-surface-highest: #e2e2e2;
+  --vc-surface-dim: #dadada;
+  --vc-on-surface: #1a1c1c;
+  --vc-on-surface-variant: #5e3f3a;
+  --vc-outline: #926e69;
+  --vc-outline-variant: #e8bdb6;
+  --vc-primary: #9e0000;
+  --vc-primary-container: #cc0000;
+  --vc-on-primary: #ffffff;
+  --vc-primary-fixed: #ffdad4;
+  --vc-primary-fixed-dim: #ffb4a8;
+  --vc-secondary: #5f5e5e;
+  --vc-secondary-container: #e2dfde;
+  --vc-on-secondary: #ffffff;
+
+  /* shadcn compat */
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* VenueChat custom tokens */
+  --color-vc-background: var(--vc-background);
+  --color-vc-surface: var(--vc-surface);
+  --color-vc-surface-lowest: var(--vc-surface-lowest);
+  --color-vc-surface-low: var(--vc-surface-low);
+  --color-vc-surface-container: var(--vc-surface-container);
+  --color-vc-surface-high: var(--vc-surface-high);
+  --color-vc-surface-highest: var(--vc-surface-highest);
+  --color-vc-surface-dim: var(--vc-surface-dim);
+  --color-vc-on-surface: var(--vc-on-surface);
+  --color-vc-on-surface-variant: var(--vc-on-surface-variant);
+  --color-vc-outline: var(--vc-outline);
+  --color-vc-outline-variant: var(--vc-outline-variant);
+  --color-vc-primary: var(--vc-primary);
+  --color-vc-primary-container: var(--vc-primary-container);
+  --color-vc-on-primary: var(--vc-on-primary);
+  --color-vc-primary-fixed: var(--vc-primary-fixed);
+  --color-vc-primary-fixed-dim: var(--vc-primary-fixed-dim);
+  --color-vc-secondary: var(--vc-secondary);
+  --color-vc-secondary-container: var(--vc-secondary-container);
+  --color-vc-on-secondary: var(--vc-on-secondary);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-[#f9f9f9] text-[#1a1c1c] antialiased;
+    font-family: var(--font-sans), 'Inter', system-ui, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  .vc-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .vc-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .vc-scroll::-webkit-scrollbar-thumb {
+    background-color: #e2dfde;
+    border-radius: 10px;
+  }
+
+  textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Shimmer loading effect */
+  .vc-shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: #ece8e7;
+  }
+  .vc-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.65) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: vc-shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes vc-shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .vc-fade-in {
+    animation: vc-fade-in 0.4s ease-out;
+  }
+  @keyframes vc-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
