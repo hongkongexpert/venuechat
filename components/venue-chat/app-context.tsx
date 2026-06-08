@@ -22,8 +22,9 @@ export type PanelId =
   | "compare"
   | "enquiries"
   | "explore"
-  | "profile"
   | null
+
+export type SettingsTab = "account" | "preferences" | "data"
 
 interface AppContextValue {
   user: User | null
@@ -35,6 +36,11 @@ interface AppContextValue {
   activePanel: PanelId
   openPanel: (id: PanelId) => void
   closePanel: () => void
+  // settings modal control
+  settingsOpen: boolean
+  settingsTab: SettingsTab
+  openSettings: (tab?: SettingsTab) => void
+  closeSettings: () => void
   // compare list (session only)
   compare: SerpVenue[]
   toggleCompare: (venue: SerpVenue) => void
@@ -54,6 +60,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loadingUser, setLoadingUser] = useState(true)
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set())
   const [activePanel, setActivePanel] = useState<PanelId>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("account")
   const [compare, setCompare] = useState<SerpVenue[]>([])
   const [dataVersion, setDataVersion] = useState(0)
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
@@ -64,6 +72,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const bumpData = useCallback(() => setDataVersion((v) => v + 1), [])
+
+  const openSettings = useCallback((tab: SettingsTab = "account") => {
+    setSettingsTab(tab)
+    setSettingsOpen(true)
+    setActivePanel(null)
+  }, [])
+
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
 
   // Load auth state + subscribe to changes
   useEffect(() => {
@@ -152,6 +168,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         activePanel,
         openPanel: setActivePanel,
         closePanel: () => setActivePanel(null),
+        settingsOpen,
+        settingsTab,
+        openSettings,
+        closeSettings,
         compare,
         toggleCompare,
         isComparing,

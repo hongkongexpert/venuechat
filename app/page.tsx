@@ -11,6 +11,7 @@ import { ChatThread, type ChatMessage } from "@/components/venue-chat/chat-threa
 import { VenueDetailDialog } from "@/components/venue-chat/venue-detail-dialog"
 import { AppProvider, useApp, type PanelId } from "@/components/venue-chat/app-context"
 import { FeaturePanels } from "@/components/venue-chat/feature-panels"
+import { SettingsDialog } from "@/components/venue-chat/settings-dialog"
 import { MobileNav } from "@/components/venue-chat/mobile-nav"
 import { saveChatSession } from "@/app/actions/venue-actions"
 import type { SerpVenue } from "@/lib/serpapi"
@@ -24,7 +25,7 @@ export default function VenueChatPage() {
 }
 
 function VenueChatWorkspace() {
-  const { user, openPanel, closePanel, bumpData } = useApp()
+  const { user, openPanel, openSettings, closePanel, bumpData } = useApp()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -35,19 +36,32 @@ function VenueChatWorkspace() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const hasConversation = messages.length > 0
 
-  // Open a panel when arriving via /?panel=... (e.g. from the dashboard)
+  // Open a panel/settings when arriving via /?panel=... or /?settings=...
   useEffect(() => {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
     const panel = params.get("panel")
-    const valid = ["saved", "history", "compare", "enquiries", "explore", "profile"]
-    if (panel && valid.includes(panel)) {
+    const settings = params.get("settings")
+    const validPanels = ["saved", "history", "compare", "enquiries", "explore"]
+    const validTabs = ["account", "preferences", "data"]
+    if (panel && validPanels.includes(panel)) {
       openPanel(panel as Exclude<PanelId, null>)
+    }
+    if (settings !== null) {
+      openSettings(
+        (validTabs.includes(settings) ? settings : "account") as
+          | "account"
+          | "preferences"
+          | "data",
+      )
+    }
+    if (panel || settings !== null) {
       const url = new URL(window.location.href)
       url.searchParams.delete("panel")
+      url.searchParams.delete("settings")
       window.history.replaceState({}, "", url.pathname + url.search)
     }
-  }, [openPanel])
+  }, [openPanel, openSettings])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -233,7 +247,7 @@ function VenueChatWorkspace() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#f9f9f9] overflow-hidden text-[#1a1c1c]">
+    <div className="flex h-[100dvh] w-full bg-[#f9f9f9] overflow-hidden text-[#1a1c1c]">
       {/* Desktop sidebar */}
       <NavigationSidebar onNewChat={handleNewChat} />
 
@@ -297,6 +311,9 @@ function VenueChatWorkspace() {
         onRestoreChat={handleRestoreChat}
         onExploreSearch={handleExploreSearch}
       />
+
+      {/* Grok-style centered settings modal */}
+      <SettingsDialog />
     </div>
   )
 }
