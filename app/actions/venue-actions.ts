@@ -388,6 +388,65 @@ export async function getMyVenue(id: string): Promise<VenueListing | null> {
   return (data as VenueListing) ?? null
 }
 
+export interface ListingDraftInput extends VenueInput {
+  amenities?: string[] | null
+  photos?: string[] | null
+}
+
+export async function createVenueFromDraft(
+  draft: ListingDraftInput,
+): Promise<ActionResult & { id?: string }> {
+  const { supabase, user } = await requireUser()
+  if (!user) return { ok: false, error: "auth" }
+  if (!draft.name?.trim()) return { ok: false, error: "The listing needs a name first." }
+
+  const slug = `${slugify(draft.name)}-${Math.random().toString(36).slice(2, 7)}`
+
+  const { data, error } = await supabase
+    .from("venues")
+    .insert({
+      owner_id: user.id,
+      name: draft.name.trim(),
+      slug,
+      description: draft.description || null,
+      short_description: draft.short_description || null,
+      address: draft.address || null,
+      district: draft.district || null,
+      area: draft.area || null,
+      venue_type: draft.venue_type || null,
+      capacity_min: draft.capacity_min ?? null,
+      capacity_max: draft.capacity_max ?? null,
+      price_min: draft.price_min ?? null,
+      price_max: draft.price_max ?? null,
+      contact_email: draft.contact_email || null,
+      contact_phone: draft.contact_phone || null,
+      website_url: draft.website_url || null,
+      cover_image: draft.photos?.[0] || draft.cover_image || null,
+      amenities: draft.amenities && draft.amenities.length ? draft.amenities : null,
+      status: "draft",
+      listing_type: "free",
+    })
+    .select("id")
+    .single()
+
+  if (error) return { ok: false, error: error.message }
+
+  // Save additional photos to venue_photos
+  const extraPhotos = (draft.photos ?? []).slice(1)
+  if (extraPhotos.length) {
+    await supabase.from("venue_photos").insert(
+      extraPhotos.map((url, i) => ({
+        venue_id: data.id,
+        image_url: url,
+        sort_order: i + 1,
+      })),
+    )
+  }
+
+  revalidatePath("/owner")
+  return { ok: true, id: data.id }
+}
+
 export async function createVenue(
   input: VenueInput,
 ): Promise<ActionResult & { id?: string }> {
