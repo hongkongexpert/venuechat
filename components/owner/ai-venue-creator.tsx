@@ -296,6 +296,15 @@ export function AiVenueCreator({ userId }: { userId: string }) {
 
       {/* RIGHT: Live preview + progress + save */}
       <section className="flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 8rem)" }}>
+        <div className="flex items-center gap-2 px-0.5">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[#3f8f4f] opacity-60 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3f8f4f]" />
+          </span>
+          <p className="text-sm font-bold text-[#1a1c1c]">Live showcase</p>
+          <p className="text-[11px] text-[#8a7a77] ml-auto">Updates as you chat</p>
+        </div>
+
         {/* Drop zone (collapsed when photos exist) */}
         {photos.length === 0 && (
           <div
