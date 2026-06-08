@@ -423,7 +423,7 @@ export async function createVenueFromDraft(
       website_url: draft.website_url || null,
       cover_image: draft.photos?.[0] || draft.cover_image || null,
       status: "draft",
-      listing_type: "free",
+      listing_type: "custom",
     })
     .select("id")
     .single()
@@ -477,7 +477,7 @@ export async function createVenue(
       website_url: input.website_url || null,
       cover_image: input.cover_image || null,
       status: "draft",
-      listing_type: "free",
+      listing_type: "custom",
     })
     .select("id")
     .single()
@@ -526,13 +526,13 @@ export async function updateVenue(
 
 export async function setVenueStatus(
   id: string,
-  status: "draft" | "published",
+  status: "draft" | "active",
 ): Promise<ActionResult> {
   const { supabase, user } = await requireUser()
   if (!user) return { ok: false, error: "auth" }
 
   // Publishing requires an active subscription
-  if (status === "published") {
+  if (status === "active") {
     const { data: venue } = await supabase
       .from("venues")
       .select("id")

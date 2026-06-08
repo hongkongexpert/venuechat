@@ -122,9 +122,9 @@ export async function persistSubscription(args: {
     await admin
       .from("venues")
       .update({
-        listing_type: tier?.slug ?? "pro",
         badge_type: tier?.badge_type ?? null,
         is_featured: tier?.slug === "premium",
+        status: "active",
         updated_at: new Date().toISOString(),
       })
       .eq("id", venueId)
@@ -132,7 +132,7 @@ export async function persistSubscription(args: {
     await admin
       .from("venues")
       .update({
-        listing_type: "free",
+        badge_type: null,
         status: "draft",
         is_featured: false,
         updated_at: new Date().toISOString(),

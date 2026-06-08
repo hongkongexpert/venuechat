@@ -64,12 +64,12 @@ export default async function VenueDetailPage({ params }: PageProps) {
                   <h1 className="text-xl font-bold text-[#1a1c1c] truncate">{venue.name}</h1>
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      venue.status === "published"
+                      venue.status === "active"
                         ? "bg-[#eaf6ec] text-[#3f8f4f]"
                         : "bg-[#f3f0ef] text-[#8a8686]"
                     }`}
                   >
-                    {venue.status === "published" ? "Published" : "Draft"}
+                    {venue.status === "active" ? "Published" : "Draft"}
                   </span>
                 </div>
                 {venue.short_description && (

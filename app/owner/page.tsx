@@ -11,7 +11,7 @@ export const metadata = {
 }
 
 function StatusBadge({ status }: { status: string | null }) {
-  const published = status === "published"
+  const published = status === "active"
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -122,9 +122,9 @@ export default async function OwnerPage() {
                         <Eye size={13} />
                         {v.view_count ?? 0} views
                       </span>
-                      {v.listing_type && v.listing_type !== "free" && (
+                      {v.badge_type && (
                         <span className="inline-flex items-center rounded-full bg-[#fdecea] px-2 py-0.5 font-semibold text-[#9e0000] capitalize">
-                          {v.listing_type}
+                          {v.badge_type}
                         </span>
                       )}
                     </div>
