@@ -56,13 +56,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activePanel, setActivePanel] = useState<PanelId>(null)
   const [compare, setCompare] = useState<SerpVenue[]>([])
   const [dataVersion, setDataVersion] = useState(0)
-  const supabaseRef = useRef(createClient())
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+
+  function getSupabase() {
+    if (!supabaseRef.current) supabaseRef.current = createClient()
+    return supabaseRef.current
+  }
 
   const bumpData = useCallback(() => setDataVersion((v) => v + 1), [])
 
   // Load auth state + subscribe to changes
   useEffect(() => {
-    const supabase = supabaseRef.current
+    const supabase = getSupabase()
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null)
       setLoadingUser(false)
