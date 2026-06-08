@@ -14,7 +14,7 @@ interface VenueActionsBarProps {
 
 export function VenueActionsBar({ venueId, status, hasActiveSub }: VenueActionsBarProps) {
   const router = useRouter()
-  const published = status === "published"
+  const published = status === "active"
   const [busy, setBusy] = useState<null | "toggle" | "delete">(null)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -22,7 +22,7 @@ export function VenueActionsBar({ venueId, status, hasActiveSub }: VenueActionsB
   const toggle = async () => {
     setError(null)
     setBusy("toggle")
-    const res = await setVenueStatus(venueId, published ? "draft" : "published")
+    const res = await setVenueStatus(venueId, published ? "draft" : "active")
     setBusy(null)
     if (!res.ok) {
       setError(res.error || "Could not update status.")

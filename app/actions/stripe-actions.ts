@@ -49,10 +49,21 @@ export async function createSubscriptionCheckout(
 
   // Free plan: activate immediately, no Stripe needed
   if (!unitAmount || unitAmount <= 0) {
-    return {
-      ok: true,
-      url: `${origin}/owner/venues/${venueId}?plan=free`,
-    }
+    // Upsert a free subscription record directly
+    await supabase.from("venue_subscriptions").upsert(
+      {
+        venue_id: venueId,
+        tier_id: tierId,
+        status: "active",
+        stripe_subscription_id: `free_${venueId}`,
+        stripe_customer_id: `free_${user.id}`,
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        cancel_at_period_end: false,
+      },
+      { onConflict: "stripe_subscription_id" },
+    )
+    return { ok: true }
   }
 
   try {
