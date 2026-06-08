@@ -7,7 +7,7 @@ import { WelcomeScreen } from "@/components/venue-chat/welcome-screen"
 import { ChatInput } from "@/components/venue-chat/chat-input"
 import { ChatThread, type ChatMessage } from "@/components/venue-chat/chat-thread"
 import { VenueDetailDialog } from "@/components/venue-chat/venue-detail-dialog"
-import { AppProvider, useApp } from "@/components/venue-chat/app-context"
+import { AppProvider, useApp, type PanelId } from "@/components/venue-chat/app-context"
 import { FeaturePanels } from "@/components/venue-chat/feature-panels"
 import { MobileNav } from "@/components/venue-chat/mobile-nav"
 import { saveChatSession } from "@/app/actions/venue-actions"
@@ -22,7 +22,7 @@ export default function VenueChatPage() {
 }
 
 function VenueChatWorkspace() {
-  const { user, closePanel, bumpData } = useApp()
+  const { user, openPanel, closePanel, bumpData } = useApp()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -32,6 +32,20 @@ function VenueChatWorkspace() {
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const hasConversation = messages.length > 0
+
+  // Open a panel when arriving via /?panel=... (e.g. from the dashboard)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const panel = params.get("panel")
+    const valid = ["saved", "history", "compare", "enquiries", "explore", "profile"]
+    if (panel && valid.includes(panel)) {
+      openPanel(panel as Exclude<PanelId, null>)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("panel")
+      window.history.replaceState({}, "", url.pathname + url.search)
+    }
+  }, [openPanel])
 
   useEffect(() => {
     if (scrollRef.current) {

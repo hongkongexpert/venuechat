@@ -1,6 +1,7 @@
 "use client"
 
 import { Menu, User, LogIn } from "lucide-react"
+import Link from "next/link"
 import { useApp } from "./app-context"
 
 interface TopAppBarProps {
@@ -37,6 +38,17 @@ export function TopAppBar({ onMenuClick }: TopAppBarProps) {
             <LogIn size={15} />
           )}
         </button>
+
+        {/* Right: Desktop sign-in pill (logged out only) */}
+        {!user && (
+          <Link
+            href="/auth/login"
+            className="pointer-events-auto ml-auto hidden md:inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
+          >
+            <LogIn size={15} />
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   )

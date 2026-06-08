@@ -191,6 +191,7 @@ export async function deleteChatSession(id: string): Promise<ActionResult> {
 
 export interface ProfileData {
   display_name?: string | null
+  avatar_url?: string | null
   default_guest_count?: number | null
   default_budget?: string | null
   default_event_type?: string | null
@@ -203,11 +204,87 @@ export async function getProfile() {
   const { data } = await supabase
     .from("profiles")
     .select(
-      "display_name, default_guest_count, default_budget, default_event_type, default_district",
+      "display_name, avatar_url, default_guest_count, default_budget, default_event_type, default_district",
     )
     .eq("id", user.id)
     .maybeSingle()
   return data
+}
+
+/* ------------------------------- Dashboard ------------------------------ */
+
+export async function getDashboardData() {
+  const { supabase, user } = await requireUser()
+  if (!user) return null
+
+  const [profileRes, savedRes, enquiriesRes, chatsRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "display_name, avatar_url, default_guest_count, default_budget, default_event_type, default_district",
+      )
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("saved_venues")
+      .select("id, venue, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("enquiries")
+      .select("id, venue, status, event_date, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("chat_sessions")
+      .select("id, title, updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(4),
+  ])
+
+  const [savedCount, enquiryCount, chatCount] = await Promise.all([
+    supabase
+      .from("saved_venues")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("enquiries")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("chat_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+  ])
+
+  return {
+    email: user.email ?? "",
+    createdAt: user.created_at,
+    profile: profileRes.data,
+    recentSaved: savedRes.data ?? [],
+    recentEnquiries: enquiriesRes.data ?? [],
+    recentChats: chatsRes.data ?? [],
+    counts: {
+      saved: savedCount.count ?? 0,
+      enquiries: enquiryCount.count ?? 0,
+      chats: chatCount.count ?? 0,
+    },
+  }
+}
+
+export async function updateAvatar(avatarUrl: string): Promise<ActionResult> {
+  const { supabase, user } = await requireUser()
+  if (!user) return { ok: false, error: "auth" }
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+    .eq("id", user.id)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/dashboard")
+  return { ok: true }
 }
 
 export async function updateProfile(profile: ProfileData): Promise<ActionResult> {
