@@ -37,20 +37,18 @@ export function PlanSelector({ venueId, tiers, activeTierSlug }: PlanSelectorPro
     setError(null)
     setPendingTier(tierId)
     const res = await createSubscriptionCheckout(venueId, tierId, interval)
-    if (!res.ok || !res.url) {
-      setError(res.error || "Could not start checkout.")
+    if (!res.ok || (!res.url && res.ok)) {
       setPendingTier(null)
+      if (!res.ok) {
+        setError(res.error || "Could not start checkout.")
+        return
+      }
+      // Free plan activated — just refresh the current page
+      startTransition(() => router.refresh())
       return
     }
-    // Free plan returns an internal URL; paid returns Stripe Checkout
-    if (res.url.startsWith("http") && res.url.includes("checkout.stripe.com")) {
-      window.location.href = res.url
-    } else {
-      startTransition(() => {
-        router.push(res.url!)
-        router.refresh()
-      })
-    }
+    // Paid plan — redirect to Stripe Checkout
+    window.location.href = res.url!
   }
 
   return (
