@@ -18,6 +18,7 @@ import {
   FileText,
   ExternalLink,
   Clock,
+  Eye,
 } from "lucide-react"
 import type { ListingDraft } from "@/lib/listing-template"
 
@@ -53,6 +54,21 @@ export function ListingPreview({ draft, photos }: ListingPreviewProps) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "") || "your-venue"
 
+  // Nothing meaningful in the draft yet → show the "preview will appear here" state.
+  const hasContent = Boolean(
+    draft.name ||
+      draft.short_description ||
+      draft.description ||
+      draft.venue_type ||
+      draft.district ||
+      draft.area ||
+      draft.address ||
+      draft.capacity_max ||
+      draft.price_min ||
+      (draft.amenities && draft.amenities.length > 0) ||
+      photos.length > 0,
+  )
+
   return (
     <div className="flex flex-col rounded-2xl border border-[#e8bdb6]/70 bg-[#f3f3f3] overflow-hidden shadow-sm">
       {/* Browser-style chrome */}
@@ -69,29 +85,51 @@ export function ListingPreview({ draft, photos }: ListingPreviewProps) {
         <RotateCw size={13} className="text-[#b8aeac] shrink-0" />
       </div>
 
-      {/* View toggle */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-[#e2dfde] bg-[#f3f3f3]">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-[#8a7a77]">
-          Live preview
-        </span>
-        <div className="flex items-center gap-1 rounded-full bg-[#e2dedc] p-0.5">
-          <ToggleBtn active={view === "card"} onClick={() => setView("card")} icon={<LayoutGrid size={13} />}>
-            Search card
-          </ToggleBtn>
-          <ToggleBtn active={view === "detail"} onClick={() => setView("detail")} icon={<FileText size={13} />}>
-            Detail page
-          </ToggleBtn>
+      {!hasContent ? (
+        /* Empty state — mirrors the homepage's calm, centered aesthetic */
+        <div className="flex flex-col items-center justify-center text-center px-6 py-16 bg-[#f9f9f9] min-h-[340px]">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#9e0000]/10 text-[#9e0000] mb-4">
+            <Eye size={26} />
+          </span>
+          <h3 className="text-base font-bold text-[#1a1c1c]">
+            Your preview will be visible here
+          </h3>
+          <p className="text-sm text-[#8a7a77] mt-1.5 max-w-xs leading-relaxed">
+            Start chatting on the left. As you describe your venue, your live
+            listing — exactly how guests will see it — builds here in real time.
+          </p>
+          <div className="mt-5 flex items-center gap-1.5 text-[11px] font-medium text-[#b8aeac]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#c4b8b5]" />
+            Waiting for your first message
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* View toggle */}
+          <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-[#e2dfde] bg-[#f3f3f3]">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#8a7a77]">
+              Live preview
+            </span>
+            <div className="flex items-center gap-1 rounded-full bg-[#e2dedc] p-0.5">
+              <ToggleBtn active={view === "card"} onClick={() => setView("card")} icon={<LayoutGrid size={13} />}>
+                Search card
+              </ToggleBtn>
+              <ToggleBtn active={view === "detail"} onClick={() => setView("detail")} icon={<FileText size={13} />}>
+                Detail page
+              </ToggleBtn>
+            </div>
+          </div>
 
-      {/* Preview surface */}
-      <div className="p-4 sm:p-5 bg-[#f9f9f9]">
-        {view === "card" ? (
-          <PreviewCard draft={draft} cover={cover} location={location} level={level} />
-        ) : (
-          <PreviewDetail draft={draft} photos={photos} cover={cover} location={location} level={level} />
-        )}
-      </div>
+          {/* Preview surface */}
+          <div className="p-4 sm:p-5 bg-[#f9f9f9]">
+            {view === "card" ? (
+              <PreviewCard draft={draft} cover={cover} location={location} level={level} />
+            ) : (
+              <PreviewDetail draft={draft} photos={photos} cover={cover} location={location} level={level} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
