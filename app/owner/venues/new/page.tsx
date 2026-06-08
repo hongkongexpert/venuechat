@@ -6,6 +6,8 @@ import { getMyVenues } from "@/app/actions/venue-actions"
 import { OwnerShell } from "@/components/owner/owner-shell"
 import { VenueForm } from "@/components/owner/venue-form"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Add Venue | VenueChat",
 }

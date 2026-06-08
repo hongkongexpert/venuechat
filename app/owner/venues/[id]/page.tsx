@@ -16,6 +16,8 @@ import { OwnerShell } from "@/components/owner/owner-shell"
 import { PlanSelector } from "@/components/owner/plan-selector"
 import { VenueActionsBar } from "@/components/owner/venue-actions-bar"
 
+export const dynamic = "force-dynamic"
+
 interface PageProps {
   params: Promise<{ id: string }>
 }

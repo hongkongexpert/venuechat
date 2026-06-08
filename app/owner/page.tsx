@@ -5,6 +5,8 @@ import { OwnerShell } from "@/components/owner/owner-shell"
 import { AiVenueCreator } from "@/components/owner/ai-venue-creator"
 import { Sparkles } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Create Listing | VenueChat",
   description: "Create and manage your venue listings with AI.",

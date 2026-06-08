@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useState, useRef, useEffect, useCallback } from "react"
 import { NavigationSidebar } from "@/components/venue-chat/navigation-sidebar"
 import { TopAppBar } from "@/components/venue-chat/top-app-bar"
