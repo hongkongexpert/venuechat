@@ -134,10 +134,10 @@ export default async function DashboardPage() {
                 Own a venue? Reach thousands of event planners searching on VenueChat.
               </p>
               <Link
-                href="/pricing"
+                href="/owner"
                 className="inline-flex items-center justify-center rounded-full bg-white text-[#9e0000] px-4 py-2 text-sm font-semibold mt-4 hover:bg-white/90 transition-colors"
               >
-                View plans
+                Manage listings
               </Link>
             </section>
 
