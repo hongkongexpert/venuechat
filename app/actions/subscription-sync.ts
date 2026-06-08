@@ -38,11 +38,12 @@ export async function recordSubscriptionFromSession(
       : subscription?.id ?? null
 
   const status = subscription?.status ?? "active"
-  const periodStart = subscription?.current_period_start
-    ? new Date(subscription.current_period_start * 1000).toISOString()
+  const item = subscription?.items?.data?.[0]
+  const periodStart = item?.current_period_start
+    ? new Date(item.current_period_start * 1000).toISOString()
     : null
-  const periodEnd = subscription?.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
+  const periodEnd = item?.current_period_end
+    ? new Date(item.current_period_end * 1000).toISOString()
     : null
   const cancelAtPeriodEnd = subscription?.cancel_at_period_end ?? false
 
