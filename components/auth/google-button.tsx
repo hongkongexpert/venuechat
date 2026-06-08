@@ -21,7 +21,14 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
       },
     })
     if (error) {
-      setError(error.message)
+      const notEnabled =
+        error.message.toLowerCase().includes("provider is not enabled") ||
+        error.message.toLowerCase().includes("unsupported provider")
+      setError(
+        notEnabled
+          ? "Google sign-in isn't available yet. Please use your email and password below, or contact support."
+          : error.message,
+      )
       setLoading(false)
     }
     // On success the browser is redirected to Google, so no need to reset loading.
