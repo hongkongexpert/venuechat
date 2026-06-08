@@ -422,7 +422,6 @@ export async function createVenueFromDraft(
       contact_phone: draft.contact_phone || null,
       website_url: draft.website_url || null,
       cover_image: draft.photos?.[0] || draft.cover_image || null,
-      amenities: draft.amenities && draft.amenities.length ? draft.amenities : null,
       status: "draft",
       listing_type: "free",
     })
@@ -431,14 +430,15 @@ export async function createVenueFromDraft(
 
   if (error) return { ok: false, error: error.message }
 
-  // Save additional photos to venue_photos
-  const extraPhotos = (draft.photos ?? []).slice(1)
-  if (extraPhotos.length) {
+  // Save all photos to venue_photos (first is the cover)
+  const photos = draft.photos ?? []
+  if (photos.length) {
     await supabase.from("venue_photos").insert(
-      extraPhotos.map((url, i) => ({
+      photos.map((url, i) => ({
         venue_id: data.id,
-        image_url: url,
-        sort_order: i + 1,
+        url,
+        is_cover: i === 0,
+        sort_order: i,
       })),
     )
   }

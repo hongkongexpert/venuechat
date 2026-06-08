@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, MapPin, Eye, ImageIcon } from "lucide-react"
+import { Plus, MapPin, Eye, ImageIcon, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { getMyVenues } from "@/app/actions/venue-actions"
 import { OwnerHeader } from "@/components/owner/owner-header"
@@ -43,13 +43,22 @@ export default async function OwnerPage() {
               Create and manage your venue listings.
             </p>
           </div>
-          <Link
-            href="/owner/venues/new"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity shrink-0"
-          >
-            <Plus size={16} />
-            Add venue
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/owner/venues/new"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dcdb] px-4 py-2.5 text-sm font-semibold text-[#5e3f3a] hover:border-[#9e0000] transition-colors"
+            >
+              <Plus size={16} />
+              Manual
+            </Link>
+            <Link
+              href="/owner/venues/ai"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            >
+              <Sparkles size={16} />
+              Create with AI
+            </Link>
+          </div>
         </div>
 
         {venues.length === 0 ? (
@@ -59,16 +68,24 @@ export default async function OwnerPage() {
             </span>
             <h2 className="text-lg font-semibold text-[#1a1c1c]">No venues yet</h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-[#5f5e5e]">
-              List your venue to reach event planners searching on VenueChat. Create
-              your listing, then choose a plan to publish it.
+              List your venue to reach event planners searching on VenueChat. Just
+              describe it in a quick chat — our AI writes the listing for you.
             </p>
-            <Link
-              href="/owner/venues/new"
-              className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            >
-              <Plus size={16} />
-              Create your first listing
-            </Link>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <Link
+                href="/owner/venues/ai"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+              >
+                <Sparkles size={16} />
+                Create with AI
+              </Link>
+              <Link
+                href="/owner/venues/new"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dcdb] px-5 py-2.5 text-sm font-semibold text-[#5e3f3a] hover:border-[#9e0000] transition-colors"
+              >
+                Fill a form instead
+              </Link>
+            </div>
           </div>
         ) : (
           <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
