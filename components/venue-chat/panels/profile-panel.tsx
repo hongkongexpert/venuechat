@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LogOut } from "lucide-react"
+import Link from "next/link"
+import { LogOut, LayoutDashboard, Sparkles, ChevronRight } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { useApp } from "../app-context"
 import { AuthGate } from "../panel-shared"
@@ -80,6 +81,25 @@ export function ProfilePanel() {
           Signed in as
         </p>
         <p className="mt-1 text-sm font-medium text-[#1a1c1c]">{user.email}</p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 rounded-xl border border-[#e2dfde] bg-white px-4 py-3 text-sm font-medium text-[#1a1c1c] transition-colors hover:bg-[#f4eceb]"
+        >
+          <LayoutDashboard size={18} className="text-[#9e0000]" />
+          <span className="flex-1">Open dashboard</span>
+          <ChevronRight size={16} className="text-[#b5b1b0]" />
+        </Link>
+        <Link
+          href="/pricing"
+          className="flex items-center gap-3 rounded-xl border border-[#e2dfde] bg-white px-4 py-3 text-sm font-medium text-[#1a1c1c] transition-colors hover:bg-[#f4eceb]"
+        >
+          <Sparkles size={18} className="text-[#9e0000]" />
+          <span className="flex-1">List your venue</span>
+          <ChevronRight size={16} className="text-[#b5b1b0]" />
+        </Link>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -165,15 +185,17 @@ export function ProfilePanel() {
         {saved ? "Saved!" : "Save preferences"}
       </button>
 
-      <form action={signOut} className="mt-1">
-        <button
-          type="submit"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#e8bdb6] bg-white px-4 py-2.5 text-sm font-semibold text-[#9e0000] transition-colors hover:bg-[#fdecea]"
-        >
-          <LogOut size={16} />
-          Sign out
-        </button>
-      </form>
+      <button
+        type="button"
+        onClick={async () => {
+          await signOut()
+          window.location.href = "/"
+        }}
+        className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#e8bdb6] bg-white px-4 py-2.5 text-sm font-semibold text-[#9e0000] transition-colors hover:bg-[#fdecea]"
+      >
+        <LogOut size={16} />
+        Sign out
+      </button>
     </div>
   )
 }

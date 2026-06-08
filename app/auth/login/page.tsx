@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Spinner } from "@/components/ui/spinner"
+import { GoogleButton } from "@/components/auth/google-button"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -41,10 +42,16 @@ export default function LoginPage() {
           Sign in to save venues and track enquiries
         </p>
 
-        <form
-          onSubmit={handleLogin}
-          className="bg-white border border-[#e8bdb6] rounded-2xl p-6 flex flex-col gap-4 shadow-sm"
-        >
+        <div className="bg-white border border-[#e8bdb6] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
+          <GoogleButton label="Sign in with Google" />
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-[#e2dfde]" />
+            <span className="text-xs text-[#9a9999]">or</span>
+            <span className="h-px flex-1 bg-[#e2dfde]" />
+          </div>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium text-[#1a1c1c]">
               Email
@@ -60,9 +67,17 @@ export default function LoginPage() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-sm font-medium text-[#1a1c1c]">
-              Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="text-sm font-medium text-[#1a1c1c]">
+                Password
+              </label>
+              <Link
+                href="/auth/forgot-password"
+                className="text-xs font-medium text-[#9e0000] hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
@@ -88,7 +103,8 @@ export default function LoginPage() {
             {loading && <Spinner className="size-4" />}
             Sign in
           </button>
-        </form>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-[#5f5e5e] mt-5">
           Don&apos;t have an account?{" "}

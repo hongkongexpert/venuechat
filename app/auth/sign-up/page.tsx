@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Spinner } from "@/components/ui/spinner"
+import { GoogleButton } from "@/components/auth/google-button"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -50,10 +51,16 @@ export default function SignUpPage() {
           Create an account to plan your event
         </p>
 
-        <form
-          onSubmit={handleSignUp}
-          className="bg-white border border-[#e8bdb6] rounded-2xl p-6 flex flex-col gap-4 shadow-sm"
-        >
+        <div className="bg-white border border-[#e8bdb6] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
+          <GoogleButton label="Sign up with Google" />
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-[#e2dfde]" />
+            <span className="text-xs text-[#9a9999]">or</span>
+            <span className="h-px flex-1 bg-[#e2dfde]" />
+          </div>
+
+          <form onSubmit={handleSignUp} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="name" className="text-sm font-medium text-[#1a1c1c]">
               Name
@@ -111,7 +118,8 @@ export default function SignUpPage() {
             {loading && <Spinner className="size-4" />}
             Create account
           </button>
-        </form>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-[#5f5e5e] mt-5">
           Already have an account?{" "}
