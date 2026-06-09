@@ -447,13 +447,13 @@ export function AiVenueCreator({
           <p className="text-sm font-bold text-[#1a1c1c]">Live showcase</p>
           <span
             className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-              plan === "premium"
+              plan === "pro"
                 ? "bg-[#9e0000]/10 text-[#9e0000]"
                 : "bg-[#f0eeed] text-[#8a7a77]"
             }`}
           >
-            {plan === "premium" && <Crown size={10} />}
-            {plan === "premium" ? "Premium" : "Free plan"}
+            {plan === "pro" && <Crown size={10} />}
+            {plan === "pro" ? "Pro" : "Free plan"}
           </span>
         </div>
 
@@ -509,8 +509,8 @@ export function AiVenueCreator({
                     You&apos;ve reached your free listing
                   </p>
                   <p className="text-xs text-[#5e3f3a] leading-relaxed mt-0.5">
-                    Free accounts include 1 listing. Upgrade to Premium for
-                    multiple listings, up to {getPlanLimits("premium").maxPhotosPerListing}{" "}
+                    Free accounts include 1 listing. Upgrade to Pro for
+                    multiple listings, up to {getPlanLimits("pro").maxPhotosPerListing}{" "}
                     photos each, full Google Maps import and featured placement.
                   </p>
                   <button
@@ -518,7 +518,7 @@ export function AiVenueCreator({
                     className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#7e0000] transition-colors"
                   >
                     <Crown size={13} />
-                    Upgrade to Premium
+                    Upgrade to Pro
                   </button>
                 </div>
               </div>

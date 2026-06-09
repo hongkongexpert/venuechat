@@ -77,7 +77,7 @@ export function PlanSelector({ venueId, tiers, activeTierSlug }: PlanSelectorPro
 
       {error && <p className="mt-3 text-sm text-[#9e0000]">{error}</p>}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {tiers.map((tier) => {
           const price = interval === "year" ? tier.price_yearly : tier.price_monthly
           const isActive = activeTierSlug === tier.slug
@@ -87,7 +87,7 @@ export function PlanSelector({ venueId, tiers, activeTierSlug }: PlanSelectorPro
             <div
               key={tier.id}
               className={`flex flex-col rounded-2xl border p-5 ${
-                tier.slug === "premium"
+                tier.slug === "pro"
                   ? "border-[#9e0000] bg-[#fffafa]"
                   : "border-[#eceae9] bg-white"
               }`}
