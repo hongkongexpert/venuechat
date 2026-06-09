@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Search, X, MapPin, Loader2, Star, Download } from "lucide-react"
+import { Search, X, MapPin, Loader2, Download } from "lucide-react"
 import { serpVenueToDraft, type ListingDraft } from "@/lib/listing-template"
 import type { SerpVenue } from "@/lib/serpapi"
 import { getPlanLimits, type AccountPlan } from "@/lib/account-plan"
@@ -152,8 +152,8 @@ export function MapsImportDialog({
           </div>
           {!limits.fullMapsImport && (
             <p className="text-[11px] text-[#8a7a77] mt-2 px-1">
-              Free plan imports the cover photo. Upgrade to Premium to import the
-              full photo gallery and reviews.
+              Free plan imports the cover photo. Upgrade to Pro to import the
+              full photo gallery.
             </p>
           )}
         </div>
@@ -203,12 +203,6 @@ export function MapsImportDialog({
                     {[v.type, v.district].filter(Boolean).join(" · ")}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    {typeof v.rating === "number" && (
-                      <span className="flex items-center gap-0.5 text-[11px] text-[#5e3f3a]">
-                        <Star size={11} className="fill-[#f5a623] text-[#f5a623]" />
-                        {v.rating}
-                      </span>
-                    )}
                     {v.address && (
                       <span className="text-[11px] text-[#b8aeac] truncate">
                         {v.address}

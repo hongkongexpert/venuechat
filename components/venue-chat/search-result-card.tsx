@@ -1,6 +1,6 @@
 "use client"
 
-import { Star, MapPin, ImageIcon, Heart, Scale } from "lucide-react"
+import { MapPin, ImageIcon, Heart, Scale } from "lucide-react"
 import type { SerpVenue } from "@/lib/serpapi"
 import { useApp } from "./app-context"
 import { cn } from "@/lib/utils"
@@ -84,22 +84,11 @@ export function SearchResultCard({ venue, onClick }: SearchResultCardProps) {
             {venue.name}
           </h4>
 
-          <div className="flex items-center gap-2 text-xs">
-            {venue.rating != null && (
-              <span className="flex items-center gap-0.5 font-semibold text-[#1a1c1c]">
-                <Star size={12} className="fill-[#e8a33d] text-[#e8a33d]" />
-                {venue.rating}
-                {venue.reviews != null && (
-                  <span className="text-[#5f5e5e] font-normal">
-                    ({venue.reviews.toLocaleString()})
-                  </span>
-                )}
-              </span>
-            )}
-            {venue.type && (
+          {venue.type && (
+            <div className="flex items-center gap-2 text-xs">
               <span className="text-[#5e3f3a] line-clamp-1">{venue.type}</span>
-            )}
-          </div>
+            </div>
+          )}
 
           {venue.address && (
             <p className="flex items-start gap-1 text-xs text-[#5f5e5e] leading-snug mt-0.5 line-clamp-1 sm:line-clamp-2">

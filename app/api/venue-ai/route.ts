@@ -65,7 +65,6 @@ export async function POST(req: Request) {
                 address: v.address ?? null,
                 phone: v.phone ?? null,
                 website: v.website ?? null,
-                rating: v.rating ?? null,
                 description: v.description ?? null,
               })),
             }

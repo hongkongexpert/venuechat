@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import {
-  Star,
   MapPin,
   Tag,
   Users,
@@ -299,8 +298,8 @@ function PreviewDetail({
           <p className="text-sm text-[#b8aeac] mt-1">A short tagline appears here</p>
         )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm">
-          <span className="flex items-center gap-1 font-semibold text-[#1a1c1c]">
-            <Star size={14} className="fill-[#e8a33d] text-[#e8a33d]" />
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#eaf6ec] px-2 py-0.5 font-semibold text-[#3f8f4f]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#3f8f4f]" />
             New listing
           </span>
         </div>
