@@ -88,11 +88,25 @@ export async function persistSubscription(args: {
   // Upsert subscription row (one current sub per venue)
   const { data: existing } = await admin
     .from("venue_subscriptions")
-    .select("id")
+    .select("id, stripe_subscription_id")
     .eq("venue_id", venueId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  // Stale-event guard: if a non-active status arrives for a subscription that
+  // has already been replaced (e.g. a cancellation webhook for an old paid sub
+  // after the venue switched to a different plan), ignore it so the newer plan
+  // isn't overwritten.
+  const incomingIsActive = status === "active" || status === "trialing"
+  if (
+    !incomingIsActive &&
+    existing?.stripe_subscription_id &&
+    stripeSubId &&
+    existing.stripe_subscription_id !== stripeSubId
+  ) {
+    return { ok: true, venueId, planName: tier?.name ?? "your plan" }
+  }
 
   const row = {
     venue_id: venueId,

@@ -10,12 +10,17 @@ export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   let event: Stripe.Event
+  // Whether the event payload can be trusted as-is (signature verified).
+  let verified = false
 
   try {
     if (webhookSecret && signature) {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+      verified = true
     } else {
-      // No webhook secret configured (e.g. test mode without CLI) — parse directly.
+      // No webhook secret configured (e.g. test mode without CLI) — parse the
+      // body only to learn WHICH object changed, then re-fetch the real state
+      // from the Stripe API so forged payloads cannot alter our data.
       event = JSON.parse(body) as Stripe.Event
     }
   } catch (err) {
@@ -28,18 +33,27 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session
         if (session.mode === "subscription" && session.subscription) {
-          const sub = await stripe.subscriptions.retrieve(
-            session.subscription as string,
-          )
-          await syncFromSubscription(sub, session.metadata ?? undefined)
+          const subId =
+            typeof session.subscription === "string"
+              ? session.subscription
+              : session.subscription.id
+          // Always retrieve from Stripe — never trust the inbound payload alone.
+          const sub = await stripe.subscriptions.retrieve(subId)
+          await syncFromSubscription(sub, verified ? (session.metadata ?? undefined) : undefined)
         }
         break
       }
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
       case "customer.subscription.created": {
-        const sub = event.data.object as Stripe.Subscription
-        await syncFromSubscription(sub)
+        const inbound = event.data.object as Stripe.Subscription
+        if (verified) {
+          await syncFromSubscription(inbound)
+        } else if (inbound?.id && typeof inbound.id === "string" && inbound.id.startsWith("sub_")) {
+          // Unverified: only trust the id, re-fetch authoritative state.
+          const sub = await stripe.subscriptions.retrieve(inbound.id)
+          await syncFromSubscription(sub)
+        }
         break
       }
       default:
