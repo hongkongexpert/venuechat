@@ -9,8 +9,6 @@ export interface SerpVenue {
   name: string
   district: string
   address?: string
-  rating?: number
-  reviews?: number
   price?: string
   type?: string
   types?: string[]
@@ -27,39 +25,6 @@ export interface SerpPhoto {
   image: string
   thumbnail?: string
   title?: string
-}
-
-export interface SerpReview {
-  reviewId?: string
-  rating?: number
-  date?: string
-  isoDate?: string
-  snippet?: string
-  likes?: number
-  user: {
-    name: string
-    thumbnail?: string
-    link?: string
-    localGuide?: boolean
-    reviews?: number
-  }
-  response?: {
-    date?: string
-    snippet?: string
-  }
-  images?: string[]
-}
-
-export interface SerpReviewsResult {
-  placeInfo?: {
-    title?: string
-    address?: string
-    rating?: number
-    reviews?: number
-    type?: string
-  }
-  topics?: { keyword: string; mentions: number; id: string }[]
-  reviews: SerpReview[]
 }
 
 export interface SerpPost {
@@ -168,8 +133,6 @@ function mapVenue(r: any): SerpVenue {
     name: r.title ?? "Unnamed venue",
     district: deriveDistrict(address, r.type),
     address,
-    rating: typeof r.rating === "number" ? r.rating : undefined,
-    reviews: typeof r.reviews === "number" ? r.reviews : undefined,
     price: r.price,
     type: r.type,
     types: r.types,
@@ -266,68 +229,6 @@ export async function getVenuePhotos(dataId: string): Promise<SerpPhoto[]> {
       title: p.title,
     }))
     .filter((p: SerpPhoto) => Boolean(p.image))
-}
-
-export async function getVenueReviews(
-  dataId: string,
-  sortBy = "newestFirst",
-): Promise<SerpReviewsResult> {
-  const params = new URLSearchParams({
-    engine: "google_maps_reviews",
-    data_id: dataId,
-    sort_by: sortBy,
-    hl: "en",
-    api_key: getKey(),
-  })
-
-  const res = await fetch(`${SERPAPI_BASE}?${params.toString()}`, {
-    cache: "no-store",
-  })
-
-  if (!res.ok) {
-    throw new Error(`SerpAPI reviews request failed with status ${res.status}`)
-  }
-
-  const data = await res.json()
-  if (data.error) throw new Error(data.error)
-
-  const reviews: SerpReview[] = (data.reviews ?? []).map((r: any) => ({
-    reviewId: r.review_id,
-    rating: typeof r.rating === "number" ? r.rating : undefined,
-    date: r.date,
-    isoDate: r.iso_date,
-    snippet: r.snippet,
-    likes: r.likes,
-    user: {
-      name: r.user?.name ?? "Google user",
-      thumbnail: r.user?.thumbnail,
-      link: r.user?.link,
-      localGuide: r.user?.local_guide,
-      reviews: r.user?.reviews,
-    },
-    response: r.response
-      ? { date: r.response.date, snippet: r.response.snippet }
-      : undefined,
-    images: r.images,
-  }))
-
-  return {
-    placeInfo: data.place_info
-      ? {
-          title: data.place_info.title,
-          address: data.place_info.address,
-          rating: data.place_info.rating,
-          reviews: data.place_info.reviews,
-          type: data.place_info.type,
-        }
-      : undefined,
-    topics: (data.topics ?? []).map((t: any) => ({
-      keyword: t.keyword,
-      mentions: t.mentions,
-      id: t.id,
-    })),
-    reviews,
-  }
 }
 
 export async function getVenuePosts(dataId: string): Promise<SerpPost[]> {

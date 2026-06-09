@@ -1,8 +1,8 @@
 // Per-user account plan model.
-// Free is the default for every new signup. Premium unlocks more listings,
-// more photos, deeper Google Maps import and premium-only listing features.
+// Free is the default for every new signup. Pro unlocks more listings,
+// more photos, deeper Google Maps import and pro-only listing features.
 
-export type AccountPlan = "free" | "premium"
+export type AccountPlan = "free" | "pro"
 
 export interface PlanLimits {
   /** How many venues a user may own in total. */
@@ -11,7 +11,7 @@ export interface PlanLimits {
   maxPhotosPerListing: number
   /** Whether the AI may auto-look-up venues on Google Maps during chat. */
   aiMapsLookup: boolean
-  /** Whether import pulls in the richer fields (reviews, full hours, all photos). */
+  /** Whether import pulls in the richer fields (full hours, all photos). */
   fullMapsImport: boolean
   /** Whether the owner may publish a listing live (vs. draft only). */
   canPublish: boolean
@@ -31,7 +31,7 @@ export const PLAN_LIMITS: Record<AccountPlan, PlanLimits> = {
     featured: false,
     analytics: false,
   },
-  premium: {
+  pro: {
     maxListings: 25,
     maxPhotosPerListing: 30,
     aiMapsLookup: true,
@@ -44,26 +44,27 @@ export const PLAN_LIMITS: Record<AccountPlan, PlanLimits> = {
 
 export const PLAN_LABELS: Record<AccountPlan, string> = {
   free: "Free",
-  premium: "Premium",
+  pro: "Pro",
 }
 
 /** Marketing bullet points shown on the upgrade screen. */
-export const PREMIUM_PERKS: string[] = [
-  "Publish unlimited listings live",
+export const PRO_PERKS: string[] = [
+  "Publish multiple listings live",
   "Up to 30 photos per venue",
-  "Full Google Maps import (reviews, hours & every photo)",
+  "Full Google Maps import (every photo & full hours)",
+  "Claim listings and edit every detail",
   "Featured placement in search",
   "Listing performance analytics",
 ]
 
 export function normalizePlan(value: unknown): AccountPlan {
-  return value === "premium" ? "premium" : "free"
+  return value === "pro" ? "pro" : "free"
 }
 
 export function getPlanLimits(plan: AccountPlan): PlanLimits {
   return PLAN_LIMITS[plan]
 }
 
-export function isPremium(plan: AccountPlan): boolean {
-  return plan === "premium"
+export function isPro(plan: AccountPlan): boolean {
+  return plan === "pro"
 }

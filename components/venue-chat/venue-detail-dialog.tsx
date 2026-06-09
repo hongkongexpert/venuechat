@@ -1,7 +1,7 @@
 "use client"
 
 import useSWR from "swr"
-import { Star, MapPin, Phone, Globe, Clock, ExternalLink } from "lucide-react"
+import { MapPin, Phone, Globe, Clock, ExternalLink } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Spinner } from "@/components/ui/spinner"
-import { VenueReviewsTab } from "./venue-reviews-tab"
 import { VenuePostsTab } from "./venue-posts-tab"
 import { VenueDirectionsTab } from "./venue-directions-tab"
 import { VenueDetailActions } from "./venue-detail-actions"
@@ -121,25 +120,14 @@ export function VenueDetailDialog({
                 {venue.name}
               </DialogTitle>
               <DialogDescription className="sr-only">
-                Photos, reviews, updates and directions for {venue.name} in{" "}
+                Photos, updates and directions for {venue.name} in{" "}
                 {venue.district}.
               </DialogDescription>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm">
-                {venue.rating != null && (
-                  <span className="flex items-center gap-1 font-semibold text-[#1a1c1c]">
-                    <Star size={14} className="fill-[#e8a33d] text-[#e8a33d]" />
-                    {venue.rating}
-                    {venue.reviews != null && (
-                      <span className="text-[#5f5e5e] font-normal">
-                        ({venue.reviews.toLocaleString()})
-                      </span>
-                    )}
-                  </span>
-                )}
-                {venue.type && (
+              {venue.type && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm">
                   <span className="text-[#5e3f3a]">{venue.type}</span>
-                )}
-              </div>
+                </div>
+              )}
             </DialogHeader>
 
             {/* Meta details */}
@@ -196,9 +184,6 @@ export function VenueDetailDialog({
                   <TabsTrigger value="photos" className="flex-1 text-xs sm:text-sm">
                     Photos
                   </TabsTrigger>
-                  <TabsTrigger value="reviews" className="flex-1 text-xs sm:text-sm">
-                    Reviews
-                  </TabsTrigger>
                   <TabsTrigger value="updates" className="flex-1 text-xs sm:text-sm">
                     Updates
                   </TabsTrigger>
@@ -209,9 +194,6 @@ export function VenueDetailDialog({
 
                 <TabsContent value="photos" className="pt-4">
                   <PhotosTab dataId={venue.id} name={venue.name} />
-                </TabsContent>
-                <TabsContent value="reviews" className="pt-4">
-                  <VenueReviewsTab dataId={venue.id} />
                 </TabsContent>
                 <TabsContent value="updates" className="pt-4">
                   <VenuePostsTab dataId={venue.id} />

@@ -175,7 +175,7 @@ function VenueChatWorkspace() {
                 venues.length === 1 ? "option" : "options"
               } in Hong Kong${
                 intent.wantsNearMe && coordsParam ? " near you" : ""
-              }. Tap any card for photos, reviews and directions.`
+              }. Tap any card for photos, updates and directions.`
             : `I couldn't find venues matching that just yet. Try a different neighbourhood, event type, or keyword.`
 
         setMessages((prev) =>

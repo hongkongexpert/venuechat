@@ -123,7 +123,7 @@ export async function persistSubscription(args: {
       .from("venues")
       .update({
         badge_type: tier?.badge_type ?? null,
-        is_featured: tier?.slug === "premium",
+        is_featured: tier?.slug === "pro",
         status: "active",
         updated_at: new Date().toISOString(),
       })
@@ -140,9 +140,9 @@ export async function persistSubscription(args: {
       .eq("id", venueId)
   }
 
-  // Keep the owner's per-user account plan in sync. A user is "premium" while
-  // they hold any active/trialing subscription on a paid tier (anything other
-  // than the free "basic" tier) across their venues; otherwise "free".
+  // Keep the owner's per-user account plan in sync. A user is "pro" while they
+  // hold any active/trialing subscription on the paid "pro" tier across their
+  // venues; otherwise they fall back to "free".
   const { data: venueRow } = await admin
     .from("venues")
     .select("owner_id")
@@ -155,21 +155,21 @@ export async function persistSubscription(args: {
       .select("id")
       .eq("owner_id", ownerId)
     const ids = (ownerVenues ?? []).map((v) => v.id)
-    let isPremium = false
+    let isPro = false
     if (ids.length) {
       const { data: paidSubs } = await admin
         .from("venue_subscriptions")
         .select("status, subscription_tiers!inner(slug)")
         .in("venue_id", ids)
         .in("status", ["active", "trialing"])
-        .in("subscription_tiers.slug", ["pro", "premium"])
+        .eq("subscription_tiers.slug", "pro")
         .limit(1)
-      isPremium = Boolean(paidSubs && paidSubs.length)
+      isPro = Boolean(paidSubs && paidSubs.length)
     }
     await admin
       .from("profiles")
       .update({
-        account_plan: isPremium ? "premium" : "free",
+        account_plan: isPro ? "pro" : "free",
         updated_at: new Date().toISOString(),
       })
       .eq("id", ownerId)

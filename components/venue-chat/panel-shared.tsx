@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Star, MapPin, Trash2, LogIn } from "lucide-react"
+import { MapPin, Trash2, LogIn } from "lucide-react"
 import type { SerpVenue } from "@/lib/serpapi"
 
 export function AuthGate({ message }: { message: string }) {
@@ -74,12 +74,6 @@ export function VenueListItem({
             {venue.name}
           </p>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-[#5f5e5e]">
-            {venue.rating != null && (
-              <span className="flex items-center gap-0.5">
-                <Star size={11} className="fill-[#e8a33d] text-[#e8a33d]" />
-                {venue.rating}
-              </span>
-            )}
             {venue.district && (
               <span className="flex items-center gap-0.5 truncate">
                 <MapPin size={11} className="text-[#9e0000]" />

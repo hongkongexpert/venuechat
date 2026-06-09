@@ -1,16 +1,11 @@
 "use client"
 
-import { Star, X } from "lucide-react"
+import { X } from "lucide-react"
 import { useApp } from "../app-context"
 import { EmptyState } from "../panel-shared"
 import type { SerpVenue } from "@/lib/serpapi"
 
 const ROWS: { label: string; get: (v: SerpVenue) => string }[] = [
-  { label: "Rating", get: (v) => (v.rating != null ? `${v.rating}★` : "—") },
-  {
-    label: "Reviews",
-    get: (v) => (v.reviews != null ? v.reviews.toLocaleString() : "—"),
-  },
   { label: "Price", get: (v) => v.price || "—" },
   { label: "Type", get: (v) => v.type || "—" },
   { label: "District", get: (v) => v.district || "—" },
@@ -96,14 +91,7 @@ export function ComparePanel({
                   key={v.id || v.name}
                   className="flex items-center gap-1 text-sm text-[#1a1c1c]"
                 >
-                  {row.label === "Rating" && v.rating != null && (
-                    <Star size={12} className="fill-[#e8a33d] text-[#e8a33d]" />
-                  )}
-                  {row.label === "Rating"
-                    ? v.rating != null
-                      ? v.rating
-                      : "—"
-                    : row.get(v)}
+                  {row.get(v)}
                 </span>
               ))}
             </div>

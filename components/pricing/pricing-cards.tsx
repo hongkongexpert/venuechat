@@ -65,7 +65,7 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto items-start">
         {tiers.map((tier) => {
           const price = yearly ? tier.price_yearly : tier.price_monthly
           const isFree = tier.price_monthly === 0
@@ -93,7 +93,7 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
                 {tier.badge_type === "verified" && (
                   <BadgeCheck size={18} className="text-[#9e0000]" />
                 )}
-                {tier.badge_type === "premium" && (
+                {(tier.badge_type === "premium" || tier.badge_type === "pro") && (
                   <Crown size={18} className="text-[#c79100]" />
                 )}
               </div>

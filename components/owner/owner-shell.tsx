@@ -13,6 +13,7 @@ import {
   Home,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react"
 import { signOut } from "@/app/actions/venue-actions"
 import type { VenueListing } from "@/app/actions/venue-actions"
@@ -108,6 +109,16 @@ export function OwnerShell({
               NEW
             </span>
           )}
+        </Link>
+
+        {/* Claim a venue */}
+        <Link
+          href="/owner/claims"
+          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-[#5e3f3a] hover:bg-[#f6f4f3] transition-colors"
+          onClick={() => setMobileOpen(false)}
+        >
+          <ShieldCheck size={16} className="shrink-0" />
+          Claim a venue
         </Link>
 
         {/* Divider */}

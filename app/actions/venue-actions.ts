@@ -509,7 +509,7 @@ export async function createVenueFromDraft(
       limitReached: true,
       error:
         plan === "free"
-          ? "Free accounts can create 1 listing. Upgrade to Premium to add more."
+          ? "Free accounts can create 1 listing. Upgrade to Pro to add more."
           : `You've reached your plan limit of ${limits.maxListings} listings.`,
     }
   }
