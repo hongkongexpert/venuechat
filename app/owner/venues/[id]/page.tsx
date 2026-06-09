@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getMyVenues, getMyVenue, getVenueSubscription } from "@/app/actions/venue-actions"
 import { OwnerShell } from "@/components/owner/owner-shell"
 import { PlanSelector } from "@/components/owner/plan-selector"
+import { ManagePlanButtons } from "@/components/owner/manage-plan-buttons"
 import { VenueActionsBar } from "@/components/owner/venue-actions-bar"
 
 export const dynamic = "force-dynamic"
@@ -147,21 +148,29 @@ export default async function VenueDetailPage({ params }: PageProps) {
 
         {/* Active subscription banner */}
         {hasActiveSub && (
-          <div className="flex items-center gap-3 rounded-2xl border border-[#cfe9d4] bg-[#f4fbf5] p-4">
-            <CheckCircle2 className="text-[#3f8f4f] shrink-0" size={20} />
-            <div className="text-sm">
-              <p className="font-semibold text-[#1a1c1c]">{sub?.tier_name} plan active</p>
-              <p className="text-[#5e3f3a]">
-                {sub?.cancel_at_period_end
-                  ? "Cancels at the end of the current period."
-                  : "Renews automatically."}
-                {sub?.current_period_end &&
-                  ` Next: ${new Date(sub.current_period_end).toLocaleDateString("en-HK", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}.`}
-              </p>
+          <div className="flex items-start gap-3 rounded-2xl border border-[#cfe9d4] bg-[#f4fbf5] p-4">
+            <CheckCircle2 className="text-[#3f8f4f] shrink-0 mt-0.5" size={20} />
+            <div className="flex flex-1 flex-col gap-2 text-sm">
+              <div>
+                <p className="font-semibold text-[#1a1c1c]">{sub?.tier_name} plan active</p>
+                <p className="text-[#5e3f3a]">
+                  {sub?.cancel_at_period_end
+                    ? "Cancels at the end of the current period."
+                    : "Renews automatically."}
+                  {sub?.current_period_end &&
+                    ` Next: ${new Date(sub.current_period_end).toLocaleDateString("en-HK", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}.`}
+                </p>
+              </div>
+              {sub?.tier_slug === "pro" && (
+                <ManagePlanButtons
+                  venueId={venue.id}
+                  cancelAtPeriodEnd={Boolean(sub?.cancel_at_period_end)}
+                />
+              )}
             </div>
           </div>
         )}

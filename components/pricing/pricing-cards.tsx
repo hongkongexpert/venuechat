@@ -88,7 +88,7 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
             </ul>
 
             <Link
-              href={isLoggedIn ? "/dashboard" : `/auth/sign-up?plan=${free.slug}`}
+              href={isLoggedIn ? "/owner" : `/auth/sign-up?plan=${free.slug}`}
               className="mt-10 inline-flex items-center justify-center rounded-2xl border-2 border-[#c4b8b5] bg-white px-6 py-3.5 text-sm font-bold text-[#1a1c1c] transition-colors hover:bg-[#f0ece9]"
             >
               Get started free
@@ -145,7 +145,7 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
               </ul>
 
               <Link
-                href={isLoggedIn ? "/dashboard" : `/auth/sign-up?plan=${pro.slug}`}
+                href={isLoggedIn ? "/owner" : `/auth/sign-up?plan=${pro.slug}`}
                 className="mt-10 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#c79100] px-6 py-3.5 text-sm font-bold text-[#1a0a0a] transition-all hover:brightness-110 shadow-lg"
               >
                 <Crown size={15} />
