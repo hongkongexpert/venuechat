@@ -1,4 +1,5 @@
 import { z } from "zod"
+import type { SerpVenue } from "@/lib/serpapi"
 
 /**
  * The canonical listing template. Every venue listing follows this exact
@@ -53,6 +54,69 @@ export const EMPTY_DRAFT: ListingDraft = {
   contact_email: null,
   contact_phone: null,
   website_url: null,
+}
+
+const HK_AREAS: Record<string, string> = {
+  "Hong Kong Island": "Hong Kong Island",
+  Kowloon: "Kowloon",
+  "New Territories": "New Territories",
+}
+
+/** Best-effort region from a Hong Kong district name. */
+function areaFromDistrict(district?: string): string | null {
+  if (!district) return null
+  const kowloon = [
+    "Tsim Sha Tsui",
+    "Jordan",
+    "Yau Ma Tei",
+    "Mong Kok",
+    "Prince Edward",
+    "Kowloon Tong",
+    "Kowloon Bay",
+    "Kwun Tong",
+    "Hung Hom",
+    "Sham Shui Po",
+    "Cheung Sha Wan",
+    "Kowloon",
+  ]
+  const nt = [
+    "Sha Tin",
+    "Tsuen Wan",
+    "Tuen Mun",
+    "Yuen Long",
+    "Tai Po",
+    "Sai Kung",
+    "Tseung Kwan O",
+    "Discovery Bay",
+    "Tung Chung",
+    "Lantau",
+    "New Territories",
+  ]
+  if (kowloon.includes(district)) return "Kowloon"
+  if (nt.includes(district)) return "New Territories"
+  if (HK_AREAS[district]) return HK_AREAS[district]
+  return "Hong Kong Island"
+}
+
+/**
+ * Map a Google Maps (SerpAPI) place into a partial listing draft. Only the
+ * fields Google actually provides are filled — capacity, pricing and curated
+ * amenities still come from the owner via chat.
+ */
+export function serpVenueToDraft(v: SerpVenue): Partial<ListingDraft> {
+  return {
+    name: v.name || null,
+    venue_type: v.type || null,
+    district: v.district && v.district !== "Hong Kong" ? v.district : null,
+    area: areaFromDistrict(v.district),
+    address: v.address || null,
+    contact_phone: v.phone || null,
+    website_url: v.website || null,
+    short_description: v.type
+      ? `${v.type}${v.district && v.district !== "Hong Kong" ? ` in ${v.district}` : ""}`
+      : null,
+    description: v.description || null,
+  }
 }
 
 /** Fields that meaningfully indicate the listing is ready to save. */

@@ -2,14 +2,17 @@
 
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import useSWR from "swr"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
-import { Upload, X, Save, Loader2, ImagePlus, CheckCircle2, Plus, ExternalLink } from "lucide-react"
+import { Upload, X, Save, Loader2, ImagePlus, CheckCircle2, Plus, ExternalLink, MapPin, Crown, Lock } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { createVenueFromDraft } from "@/app/actions/venue-actions"
+import { createVenueFromDraft, getOwnerContext } from "@/app/actions/venue-actions"
 import { EMPTY_DRAFT, listingCompletion, type ListingDraft } from "@/lib/listing-template"
 import { ListingPreview } from "@/components/owner/listing-preview"
 import { ChatInput } from "@/components/venue-chat/chat-input"
+import { MapsImportDialog } from "@/components/owner/maps-import-dialog"
+import { getPlanLimits, type AccountPlan } from "@/lib/account-plan"
 
 function getText(parts: { type: string; text?: string }[] | undefined) {
   if (!parts) return ""
@@ -27,21 +30,48 @@ const STARTERS = [
 
 export function AiVenueCreator({
   userId,
+  plan: planProp = "free",
+  listingCount: listingCountProp = 0,
   onExit,
 }: {
   userId: string
+  plan?: AccountPlan
+  listingCount?: number
   onExit?: () => void
 }) {
   const router = useRouter()
+  const { data: ctx } = useSWR("owner-context", () => getOwnerContext())
+  const plan: AccountPlan = ctx?.plan ?? planProp
+  const listingCount = ctx?.listingCount ?? listingCountProp
+  const limits = useMemo(() => getPlanLimits(plan), [plan])
+  const atListingLimit = listingCount >= limits.maxListings
   const [draft, setDraft] = useState<ListingDraft>(EMPTY_DRAFT)
   const [photos, setPhotos] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [limitReached, setLimitReached] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Add photos while respecting the plan's per-listing photo cap.
+  const addPhotos = useCallback(
+    (urls: string[]) => {
+      setPhotos((prev) => {
+        const next = [...prev]
+        for (const url of urls) {
+          if (!url || next.includes(url)) continue
+          if (next.length >= limits.maxPhotosPerListing) break
+          next.push(url)
+        }
+        return next
+      })
+    },
+    [limits.maxPhotosPerListing],
+  )
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/venue-ai" }),
@@ -63,6 +93,10 @@ export function AiVenueCreator({
           }
           return next
         })
+      }
+      if (toolCall.toolName === "setPhotos") {
+        const { urls } = (toolCall.input as { urls?: string[] }) ?? {}
+        if (Array.isArray(urls) && urls.length) addPhotos(urls)
       }
     },
   })
@@ -104,10 +138,26 @@ export function AiVenueCreator({
           urls.push(data.publicUrl)
         }
       }
-      setPhotos((prev) => [...prev, ...urls])
+      addPhotos(urls)
       setUploading(false)
     },
-    [userId],
+    [userId, addPhotos],
+  )
+
+  const handleImport = useCallback(
+    (patch: Partial<ListingDraft>, importedPhotos: string[]) => {
+      setDraft((prev) => {
+        const next: ListingDraft = { ...prev }
+        for (const [k, v] of Object.entries(patch)) {
+          if (v === undefined || v === null) continue
+          // @ts-expect-error dynamic key assignment
+          next[k] = v
+        }
+        return next
+      })
+      if (importedPhotos.length) addPhotos(importedPhotos)
+    },
+    [addPhotos],
   )
 
   const onDrop = useCallback(
@@ -145,6 +195,7 @@ export function AiVenueCreator({
       setSavedId(res.id)
       setSaving(false)
     } else {
+      if (res.limitReached) setLimitReached(true)
       setSaveError(res.error || "Could not save the listing.")
       setSaving(false)
     }
@@ -288,6 +339,22 @@ export function AiVenueCreator({
                   </p>
                 </div>
 
+                <div className="max-w-sm mx-auto w-full">
+                  <button
+                    type="button"
+                    onClick={() => setImportOpen(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#1a1c1c] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#333]"
+                  >
+                    <MapPin size={15} />
+                    Import from Google Maps
+                  </button>
+                  <div className="flex items-center gap-3 my-4">
+                    <span className="h-px flex-1 bg-[#e8e4e3]" />
+                    <span className="text-[11px] font-medium text-[#b8aeac]">or describe it</span>
+                    <span className="h-px flex-1 bg-[#e8e4e3]" />
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-2 max-w-sm mx-auto w-full">
                   <p className="text-[13px] font-semibold text-[#8a7a77] text-center mb-1">
                     Try one of these to start
@@ -313,7 +380,9 @@ export function AiVenueCreator({
             {/* Photo strip */}
             {photos.length > 0 && (
               <div className="mb-2 flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-[11px] font-semibold text-[#8a7a77] shrink-0">Photos:</span>
+                <span className="text-[11px] font-semibold text-[#8a7a77] shrink-0">
+                  Photos {photos.length}/{limits.maxPhotosPerListing}:
+                </span>
                 {photos.map((p, i) => (
                   <div key={i} className="relative h-9 w-12 rounded-md overflow-hidden group shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -341,7 +410,7 @@ export function AiVenueCreator({
               placeholder="Describe your venue — type or speak…"
             />
 
-            <div className="flex justify-center pt-2">
+            <div className="flex justify-center items-center gap-4 pt-2">
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
@@ -353,6 +422,15 @@ export function AiVenueCreator({
                   <ImagePlus size={13} />
                 )}
                 Add venue photos
+              </button>
+              <span className="h-3 w-px bg-[#e0dcdb]" />
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#8a7a77] hover:text-[#9e0000] transition-colors"
+              >
+                <MapPin size={13} />
+                Import from Maps
               </button>
             </div>
           </div>
@@ -367,7 +445,16 @@ export function AiVenueCreator({
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3f8f4f]" />
           </span>
           <p className="text-sm font-bold text-[#1a1c1c]">Live showcase</p>
-          <p className="text-[11px] text-[#8a7a77] ml-auto">Updates as you chat</p>
+          <span
+            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+              plan === "premium"
+                ? "bg-[#9e0000]/10 text-[#9e0000]"
+                : "bg-[#f0eeed] text-[#8a7a77]"
+            }`}
+          >
+            {plan === "premium" && <Crown size={10} />}
+            {plan === "premium" ? "Premium" : "Free plan"}
+          </span>
         </div>
 
         {/* Drop zone (collapsed when photos exist) */}
@@ -411,18 +498,55 @@ export function AiVenueCreator({
               style={{ width: `${(completion.filled / completion.total) * 100}%` }}
             />
           </div>
-          {saveError && (
+          {(atListingLimit || limitReached) && (
+            <div className="mb-3 rounded-xl border border-[#e8bdb6] bg-[#fdf6f4] p-3.5">
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#9e0000]/10 text-[#9e0000]">
+                  <Crown size={16} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-[#1a1c1c]">
+                    You&apos;ve reached your free listing
+                  </p>
+                  <p className="text-xs text-[#5e3f3a] leading-relaxed mt-0.5">
+                    Free accounts include 1 listing. Upgrade to Premium for
+                    multiple listings, up to {getPlanLimits("premium").maxPhotosPerListing}{" "}
+                    photos each, full Google Maps import and featured placement.
+                  </p>
+                  <button
+                    onClick={() => router.push("/pricing")}
+                    className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#7e0000] transition-colors"
+                  >
+                    <Crown size={13} />
+                    Upgrade to Premium
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {saveError && !limitReached && (
             <p className="text-sm text-[#9e0000] bg-[#fdecea] rounded-lg px-3 py-2 mb-3">
               {saveError}
             </p>
           )}
           <button
             onClick={save}
-            disabled={!completion.ready || saving}
+            disabled={!completion.ready || saving || atListingLimit}
             className="w-full flex items-center justify-center gap-2 rounded-full bg-[#9e0000] text-white py-3 text-sm font-semibold disabled:opacity-40 hover:bg-[#7e0000] transition-colors"
           >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {completion.ready ? "Save listing as draft" : "Keep chatting to complete listing"}
+            {atListingLimit ? (
+              <Lock size={16} />
+            ) : saving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
+            {atListingLimit
+              ? "Upgrade to add another listing"
+              : completion.ready
+                ? "Save listing as draft"
+                : "Keep chatting to complete listing"}
           </button>
           {!completion.ready && (
             <p className="text-center text-xs text-[#8a7a77] mt-2">
@@ -437,6 +561,13 @@ export function AiVenueCreator({
           )}
         </div>
       </section>
+
+      <MapsImportDialog
+        open={importOpen}
+        plan={plan}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
+      />
     </div>
   )
 }

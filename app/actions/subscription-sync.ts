@@ -140,6 +140,41 @@ export async function persistSubscription(args: {
       .eq("id", venueId)
   }
 
+  // Keep the owner's per-user account plan in sync. A user is "premium" while
+  // they hold any active/trialing subscription on a premium tier across their
+  // venues; otherwise they fall back to "free".
+  const { data: venueRow } = await admin
+    .from("venues")
+    .select("owner_id")
+    .eq("id", venueId)
+    .maybeSingle()
+  const ownerId = venueRow?.owner_id as string | undefined
+  if (ownerId) {
+    const { data: ownerVenues } = await admin
+      .from("venues")
+      .select("id")
+      .eq("owner_id", ownerId)
+    const ids = (ownerVenues ?? []).map((v) => v.id)
+    let isPremium = false
+    if (ids.length) {
+      const { data: premiumSubs } = await admin
+        .from("venue_subscriptions")
+        .select("status, subscription_tiers!inner(slug)")
+        .in("venue_id", ids)
+        .in("status", ["active", "trialing"])
+        .eq("subscription_tiers.slug", "premium")
+        .limit(1)
+      isPremium = Boolean(premiumSubs && premiumSubs.length)
+    }
+    await admin
+      .from("profiles")
+      .update({
+        account_plan: isPremium ? "premium" : "free",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", ownerId)
+  }
+
   revalidatePath("/owner")
   revalidatePath(`/owner/venues/${venueId}`)
   return { ok: true, venueId, planName: tier?.name ?? "your plan" }
