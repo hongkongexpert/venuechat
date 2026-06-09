@@ -24,8 +24,13 @@ export function MobileNav({ open, onClose, onNewChat }: MobileNavProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 px-1">
-          <span className="text-[#9e0000] font-black text-lg tracking-tight">
-            VenueChat
+          <span className="flex items-center gap-1.5">
+            <span className="text-[#9e0000] font-black text-lg tracking-tight">
+              VenueChat
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#e8bdb6] bg-[#9e0000]/8 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#9e0000] leading-none">
+              Beta
+            </span>
           </span>
           <button
             aria-label="Close menu"

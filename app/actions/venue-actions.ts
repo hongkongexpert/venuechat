@@ -3,6 +3,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { SerpVenue } from "@/lib/serpapi"
+import {
+  normalizePlan,
+  getPlanLimits,
+  type AccountPlan,
+} from "@/lib/account-plan"
 
 export interface ActionResult {
   ok: boolean
@@ -211,6 +216,94 @@ export async function getProfile() {
   return data
 }
 
+/* ----------------------------- Account plan ----------------------------- */
+
+export interface OwnerContext {
+  plan: AccountPlan
+  listingCount: number
+  limits: ReturnType<typeof getPlanLimits>
+}
+
+export async function getMyPlan(): Promise<AccountPlan> {
+  const { supabase, user } = await requireUser()
+  if (!user) return "free"
+  const { data } = await supabase
+    .from("profiles")
+    .select("account_plan")
+    .eq("id", user.id)
+    .maybeSingle()
+  return normalizePlan(data?.account_plan)
+}
+
+/** Plan + current usage, used to gate the listing creation UI. */
+export async function getOwnerContext(): Promise<OwnerContext> {
+  const { supabase, user } = await requireUser()
+  if (!user) {
+    const plan: AccountPlan = "free"
+    return { plan, listingCount: 0, limits: getPlanLimits(plan) }
+  }
+  const [planRes, countRes] = await Promise.all([
+    supabase.from("profiles").select("account_plan").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("venues")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", user.id),
+  ])
+  const plan = normalizePlan(planRes.data?.account_plan)
+  return {
+    plan,
+    listingCount: countRes.count ?? 0,
+    limits: getPlanLimits(plan),
+  }
+}
+
+/**
+ * Persist photos to our own storage. Photos already hosted in our
+ * `venue-images` bucket are kept as-is. External URLs (e.g. Google Maps /
+ * SerpAPI photos) are downloaded server-side and re-uploaded so they never
+ * expire or break. Returns the final list of permanent public URLs.
+ */
+async function persistExternalPhotos(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  urls: string[],
+): Promise<string[]> {
+  const ownPrefix = "/storage/v1/object/public/venue-images/"
+  const out: string[] = []
+
+  for (const url of urls) {
+    if (!url) continue
+    // Already in our bucket — keep it.
+    if (url.includes(ownPrefix)) {
+      out.push(url)
+      continue
+    }
+    try {
+      const res = await fetch(url, { cache: "no-store" })
+      if (!res.ok) continue
+      const contentType = res.headers.get("content-type") || "image/jpeg"
+      if (!contentType.startsWith("image/")) continue
+      const buf = new Uint8Array(await res.arrayBuffer())
+      // Skip anything suspiciously large (>8MB)
+      if (buf.byteLength > 8 * 1024 * 1024) continue
+      const ext = contentType.split("/")[1]?.split("+")[0] || "jpg"
+      const path = `${userId}/import-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}.${ext}`
+      const { error } = await supabase.storage
+        .from("venue-images")
+        .upload(path, buf, { contentType, upsert: true, cacheControl: "3600" })
+      if (error) continue
+      const { data } = supabase.storage.from("venue-images").getPublicUrl(path)
+      out.push(data.publicUrl)
+    } catch {
+      // Ignore a single failed photo; keep going.
+      continue
+    }
+  }
+  return out
+}
+
 /* ------------------------------- Dashboard ------------------------------ */
 
 export async function getDashboardData() {
@@ -395,12 +488,37 @@ export interface ListingDraftInput extends VenueInput {
 
 export async function createVenueFromDraft(
   draft: ListingDraftInput,
-): Promise<ActionResult & { id?: string }> {
+): Promise<ActionResult & { id?: string; limitReached?: boolean }> {
   const { supabase, user } = await requireUser()
   if (!user) return { ok: false, error: "auth" }
   if (!draft.name?.trim()) return { ok: false, error: "The listing needs a name first." }
 
+  // Enforce per-plan listing limit.
+  const plan = normalizePlan(
+    (await supabase.from("profiles").select("account_plan").eq("id", user.id).maybeSingle())
+      .data?.account_plan,
+  )
+  const limits = getPlanLimits(plan)
+  const { count: listingCount } = await supabase
+    .from("venues")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_id", user.id)
+  if ((listingCount ?? 0) >= limits.maxListings) {
+    return {
+      ok: false,
+      limitReached: true,
+      error:
+        plan === "free"
+          ? "Free accounts can create 1 listing. Upgrade to Premium to add more."
+          : `You've reached your plan limit of ${limits.maxListings} listings.`,
+    }
+  }
+
   const slug = `${slugify(draft.name)}-${Math.random().toString(36).slice(2, 7)}`
+
+  // Download external photos into our own storage and cap to the plan limit.
+  const requested = (draft.photos ?? []).slice(0, limits.maxPhotosPerListing)
+  const photos = await persistExternalPhotos(supabase, user.id, requested)
 
   const { data, error } = await supabase
     .from("venues")
@@ -421,7 +539,7 @@ export async function createVenueFromDraft(
       contact_email: draft.contact_email || null,
       contact_phone: draft.contact_phone || null,
       website_url: draft.website_url || null,
-      cover_image: draft.photos?.[0] || draft.cover_image || null,
+      cover_image: photos[0] || draft.cover_image || null,
       status: "draft",
       listing_type: "custom",
     })
@@ -431,7 +549,6 @@ export async function createVenueFromDraft(
   if (error) return { ok: false, error: error.message }
 
   // Save all photos to venue_photos (first is the cover)
-  const photos = draft.photos ?? []
   if (photos.length) {
     await supabase.from("venue_photos").insert(
       photos.map((url, i) => ({

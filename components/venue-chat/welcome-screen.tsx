@@ -29,6 +29,9 @@ export function WelcomeScreen({ onSearch }: WelcomeScreenProps) {
           <span className="text-[#9e0000] font-black text-2xl tracking-tight leading-none">
             VenueChat
           </span>
+          <span className="ml-1 inline-flex items-center rounded-full border border-[#e8bdb6] bg-[#9e0000]/8 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#9e0000] leading-none">
+            Beta
+          </span>
         </div>
       </div>
 
