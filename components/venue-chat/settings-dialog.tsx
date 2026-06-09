@@ -127,7 +127,7 @@ export function SettingsDialog() {
 /* ---------------- Account ---------------- */
 
 function AccountSection() {
-  const { user, closeSettings } = useApp()
+  const { user, closeSettings, openListMode } = useApp()
   const initial = user?.email ? user.email[0].toUpperCase() : "?"
 
   return (
@@ -168,8 +168,10 @@ function AccountSection() {
           icon={<Sparkles size={18} className="text-[#9e0000]" />}
           label="List your venue"
           sub="Reach event planners across Hong Kong"
-          href="/owner"
-          onNavigate={closeSettings}
+          onAction={() => {
+            closeSettings()
+            openListMode()
+          }}
         />
         <div className="border-t border-[#eceae9]" />
         <Row
@@ -202,29 +204,44 @@ function Row({
   sub,
   href,
   onNavigate,
+  onAction,
 }: {
   icon: React.ReactNode
   label: string
   sub: string
-  href: string
-  onNavigate: () => void
+  href?: string
+  onNavigate?: () => void
+  onAction?: () => void
 }) {
-  return (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[#f7efee]"
-    >
+  const inner = (
+    <>
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fbf3f2]">
         {icon}
       </span>
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1 text-left">
         <span className="block text-sm font-semibold text-[#1a1c1c]">
           {label}
         </span>
         <span className="block truncate text-xs text-[#8a7a77]">{sub}</span>
       </span>
       <ChevronRight size={16} className="shrink-0 text-[#b5b1b0]" />
+    </>
+  )
+
+  const className =
+    "flex w-full items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[#f7efee]"
+
+  if (onAction) {
+    return (
+      <button type="button" onClick={onAction} className={className}>
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <Link href={href ?? "#"} onClick={onNavigate} className={className}>
+      {inner}
     </Link>
   )
 }

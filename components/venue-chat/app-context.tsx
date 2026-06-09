@@ -41,6 +41,10 @@ interface AppContextValue {
   settingsTab: SettingsTab
   openSettings: (tab?: SettingsTab) => void
   closeSettings: () => void
+  // inline "list your venue" mode (lives on the homepage)
+  listMode: boolean
+  openListMode: () => void
+  closeListMode: () => void
   // compare list (session only)
   compare: SerpVenue[]
   toggleCompare: (venue: SerpVenue) => void
@@ -62,6 +66,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activePanel, setActivePanel] = useState<PanelId>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("account")
+  const [listMode, setListMode] = useState(false)
   const [compare, setCompare] = useState<SerpVenue[]>([])
   const [dataVersion, setDataVersion] = useState(0)
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
@@ -80,6 +85,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const closeSettings = useCallback(() => setSettingsOpen(false), [])
+
+  const openListMode = useCallback(() => {
+    setListMode(true)
+    setActivePanel(null)
+    setSettingsOpen(false)
+  }, [])
+
+  const closeListMode = useCallback(() => setListMode(false), [])
 
   // Load auth state + subscribe to changes
   useEffect(() => {
@@ -172,6 +185,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settingsTab,
         openSettings,
         closeSettings,
+        listMode,
+        openListMode,
+        closeListMode,
         compare,
         toggleCompare,
         isComparing,

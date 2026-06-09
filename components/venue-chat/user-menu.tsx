@@ -24,7 +24,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ align = "left", placement = "top", children }: UserMenuProps) {
-  const { user, openSettings } = useApp()
+  const { user, openSettings, openListMode } = useApp()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -79,7 +79,7 @@ export function UserMenu({ align = "left", placement = "top", children }: UserMe
       label: "List your venue",
       onClick: () => {
         setOpen(false)
-        router.push("/owner")
+        openListMode()
       },
     },
     {

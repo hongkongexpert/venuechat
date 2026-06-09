@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
-import { Upload, X, Save, Loader2, ImagePlus } from "lucide-react"
+import { Upload, X, Save, Loader2, ImagePlus, CheckCircle2, Plus, ExternalLink } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { createVenueFromDraft } from "@/app/actions/venue-actions"
 import { EMPTY_DRAFT, listingCompletion, type ListingDraft } from "@/lib/listing-template"
@@ -25,12 +25,19 @@ const STARTERS = [
   "I have a garden space in the New Territories",
 ]
 
-export function AiVenueCreator({ userId }: { userId: string }) {
+export function AiVenueCreator({
+  userId,
+  onExit,
+}: {
+  userId: string
+  onExit?: () => void
+}) {
   const router = useRouter()
   const [draft, setDraft] = useState<ListingDraft>(EMPTY_DRAFT)
   const [photos, setPhotos] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savedId, setSavedId] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -135,11 +142,68 @@ export function AiVenueCreator({ userId }: { userId: string }) {
       photos,
     })
     if (res.ok && res.id) {
-      router.push(`/owner/venues/${res.id}`)
+      setSavedId(res.id)
+      setSaving(false)
     } else {
       setSaveError(res.error || "Could not save the listing.")
       setSaving(false)
     }
+  }
+
+  const resetForAnother = () => {
+    setDraft(EMPTY_DRAFT)
+    setPhotos([])
+    setSavedId(null)
+    setSaveError(null)
+  }
+
+  // Inline success — stays on the homepage, no navigation.
+  if (savedId) {
+    return (
+      <div className="grid lg:grid-cols-2 gap-4 lg:gap-5 w-full h-full min-h-0">
+        <section className="flex flex-col items-center justify-center text-center rounded-2xl border border-[#eceae9] bg-white p-8">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#3f8f4f]/12 text-[#3f8f4f] mb-5">
+            <CheckCircle2 size={34} />
+          </span>
+          <h2 className="text-xl font-bold text-[#1a1c1c]">
+            {draft.name || "Your venue"} is saved as a draft
+          </h2>
+          <p className="text-sm text-[#8a7a77] mt-2 max-w-sm leading-relaxed">
+            Nice work. Your listing is saved. You can keep refining it, add more
+            photos, or publish it from your venue manager.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5 w-full max-w-xs">
+            <button
+              onClick={() => router.push(`/owner/venues/${savedId}`)}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-[#9e0000] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#7e0000]"
+            >
+              <ExternalLink size={15} />
+              Open listing
+            </button>
+            <button
+              onClick={resetForAnother}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[#e8bdb6] bg-white px-4 py-2.5 text-sm font-semibold text-[#5e3f3a] transition-colors hover:border-[#9e0000] hover:text-[#9e0000]"
+            >
+              <Plus size={15} />
+              List another
+            </button>
+          </div>
+          {onExit && (
+            <button
+              onClick={onExit}
+              className="mt-4 text-sm font-medium text-[#8a7a77] hover:text-[#9e0000] transition-colors"
+            >
+              Back to search
+            </button>
+          )}
+        </section>
+
+        {/* Keep the finished showcase visible on the right */}
+        <section className="overflow-y-auto min-h-0 vc-scroll">
+          <ListingPreview draft={draft} photos={photos} />
+        </section>
+      </div>
+    )
   }
 
   return (
