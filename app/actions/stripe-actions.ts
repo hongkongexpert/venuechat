@@ -179,6 +179,55 @@ export async function createSubscriptionCheckout(
   }
 }
 
+interface PricingCheckoutResult {
+  ok: boolean
+  /** Stripe Checkout URL to redirect to (when a checkout was started). */
+  url?: string
+  /** Internal route to navigate to instead (e.g. create a venue first). */
+  redirect?: string
+  error?: string
+}
+
+/**
+ * Start a Pro checkout directly from the public pricing page.
+ * Subscriptions are per-venue, so this resolves the user's venue first:
+ * - no venues  -> send them to create one
+ * - one venue  -> start Stripe checkout for it immediately
+ * - many venues-> send them to the owner dashboard to pick which venue to upgrade
+ */
+export async function startCheckoutFromPricing(
+  tierId: string,
+  interval: "month" | "year" = "month",
+): Promise<PricingCheckoutResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: true, redirect: "/auth/login?next=/pricing" }
+
+  const { data: venues } = await supabase
+    .from("venues")
+    .select("id")
+    .eq("owner_id", user.id)
+    .limit(2)
+
+  if (!venues || venues.length === 0) {
+    // Need a venue before a plan can be purchased.
+    return { ok: true, redirect: "/owner/venues/new?plan=upgrade" }
+  }
+
+  if (venues.length > 1) {
+    // Multiple venues — let the owner choose which one to upgrade.
+    return { ok: true, redirect: "/owner?intent=upgrade" }
+  }
+
+  const res = await createSubscriptionCheckout(venues[0].id, tierId, interval)
+  if (!res.ok) return { ok: false, error: res.error }
+  if (res.url) return { ok: true, url: res.url }
+  // Free plan applied directly (no checkout URL) — go to the venue page.
+  return { ok: true, redirect: `/owner/venues/${venues[0].id}` }
+}
+
 /**
  * Load the current subscription row for a venue after verifying ownership.
  */

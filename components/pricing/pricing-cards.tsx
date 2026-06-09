@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Check, Crown } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Check, Crown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { startCheckoutFromPricing } from "@/app/actions/stripe-actions"
 
 export interface Tier {
   id: string
@@ -22,10 +24,38 @@ function formatHkd(cents: number) {
 }
 
 export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn: boolean }) {
+  const router = useRouter()
   const [yearly, setYearly] = useState(false)
+  const [loadingTier, setLoadingTier] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const free = tiers.find((t) => t.price_monthly === 0)
   const pro = tiers.find((t) => t.price_monthly > 0 && t.is_featured) ?? tiers.find((t) => t.price_monthly > 0)
+
+  const handleUpgrade = async (tierId: string) => {
+    setError(null)
+    setLoadingTier(tierId)
+    try {
+      const res = await startCheckoutFromPricing(tierId, yearly ? "year" : "month")
+      if (!res.ok) {
+        setError(res.error || "Could not start checkout. Please try again.")
+        setLoadingTier(null)
+        return
+      }
+      if (res.url) {
+        window.location.href = res.url
+        return
+      }
+      if (res.redirect) {
+        router.push(res.redirect)
+        return
+      }
+      setLoadingTier(null)
+    } catch {
+      setError("Could not start checkout. Please try again.")
+      setLoadingTier(null)
+    }
+  }
 
   return (
     <div className="w-full">
@@ -58,6 +88,12 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
         </span>
       </div>
 
+      {error && (
+        <p className="max-w-4xl mx-auto mb-6 rounded-xl bg-[#fdecea] px-4 py-3 text-sm font-medium text-[#9e0000]">
+          {error}
+        </p>
+      )}
+
       {/* Side-by-side cards — unified border, seamless join */}
       <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto rounded-3xl overflow-hidden border border-[#1a0a0a]/15 shadow-xl">
 
@@ -87,12 +123,24 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
               ))}
             </ul>
 
-            <Link
-              href={isLoggedIn ? "/owner" : `/auth/sign-up?plan=${free.slug}`}
-              className="mt-10 inline-flex items-center justify-center rounded-2xl border-2 border-[#c4b8b5] bg-white px-6 py-3.5 text-sm font-bold text-[#1a1c1c] transition-colors hover:bg-[#f0ece9]"
-            >
-              Get started free
-            </Link>
+            {isLoggedIn ? (
+              <button
+                type="button"
+                onClick={() => handleUpgrade(free.id)}
+                disabled={loadingTier !== null}
+                className="mt-10 inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[#c4b8b5] bg-white px-6 py-3.5 text-sm font-bold text-[#1a1c1c] transition-colors hover:bg-[#f0ece9] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loadingTier === free.id && <Loader2 size={15} className="animate-spin" />}
+                Get started free
+              </button>
+            ) : (
+              <Link
+                href={`/auth/sign-up?plan=${free.slug}`}
+                className="mt-10 inline-flex items-center justify-center rounded-2xl border-2 border-[#c4b8b5] bg-white px-6 py-3.5 text-sm font-bold text-[#1a1c1c] transition-colors hover:bg-[#f0ece9]"
+              >
+                Get started free
+              </Link>
+            )}
           </div>
         )}
 
@@ -144,13 +192,29 @@ export function PricingCards({ tiers, isLoggedIn }: { tiers: Tier[]; isLoggedIn:
                 ))}
               </ul>
 
-              <Link
-                href={isLoggedIn ? "/owner" : `/auth/sign-up?plan=${pro.slug}`}
-                className="mt-10 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#c79100] px-6 py-3.5 text-sm font-bold text-[#1a0a0a] transition-all hover:brightness-110 shadow-lg"
-              >
-                <Crown size={15} />
-                Get Pro
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={() => handleUpgrade(pro.id)}
+                  disabled={loadingTier !== null}
+                  className="mt-10 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#c79100] px-6 py-3.5 text-sm font-bold text-[#1a0a0a] transition-all hover:brightness-110 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loadingTier === pro.id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Crown size={15} />
+                  )}
+                  {loadingTier === pro.id ? "Starting checkout…" : "Get Pro"}
+                </button>
+              ) : (
+                <Link
+                  href={`/auth/sign-up?plan=${pro.slug}`}
+                  className="mt-10 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#c79100] px-6 py-3.5 text-sm font-bold text-[#1a0a0a] transition-all hover:brightness-110 shadow-lg"
+                >
+                  <Crown size={15} />
+                  Get Pro
+                </Link>
+              )}
 
               <p className="mt-3 text-center text-xs text-[#4a3830]">
                 Cancel anytime. No hidden fees.
