@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useState, useRef, useEffect, useCallback } from "react"
 import { NavigationSidebar } from "@/components/venue-chat/navigation-sidebar"
 import { TopAppBar } from "@/components/venue-chat/top-app-bar"
@@ -9,9 +11,14 @@ import { ChatThread, type ChatMessage } from "@/components/venue-chat/chat-threa
 import { VenueDetailDialog } from "@/components/venue-chat/venue-detail-dialog"
 import { AppProvider, useApp, type PanelId } from "@/components/venue-chat/app-context"
 import { FeaturePanels } from "@/components/venue-chat/feature-panels"
+import { SettingsDialog } from "@/components/venue-chat/settings-dialog"
 import { MobileNav } from "@/components/venue-chat/mobile-nav"
+import { AiVenueCreator } from "@/components/owner/ai-venue-creator"
 import { saveChatSession } from "@/app/actions/venue-actions"
 import type { SerpVenue } from "@/lib/serpapi"
+import type { User } from "@supabase/supabase-js"
+import { ArrowLeft, LogIn } from "lucide-react"
+import Link from "next/link"
 
 export default function VenueChatPage() {
   return (
@@ -22,7 +29,8 @@ export default function VenueChatPage() {
 }
 
 function VenueChatWorkspace() {
-  const { user, openPanel, closePanel, bumpData } = useApp()
+  const { user, openPanel, openSettings, closePanel, bumpData, listMode, openListMode, closeListMode } =
+    useApp()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -33,19 +41,37 @@ function VenueChatWorkspace() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const hasConversation = messages.length > 0
 
-  // Open a panel when arriving via /?panel=... (e.g. from the dashboard)
+  // Open a panel/settings when arriving via /?panel=... or /?settings=...
   useEffect(() => {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
     const panel = params.get("panel")
-    const valid = ["saved", "history", "compare", "enquiries", "explore", "profile"]
-    if (panel && valid.includes(panel)) {
+    const settings = params.get("settings")
+    const list = params.get("list")
+    const validPanels = ["saved", "history", "compare", "enquiries", "explore"]
+    const validTabs = ["account", "preferences", "data"]
+    if (panel && validPanels.includes(panel)) {
       openPanel(panel as Exclude<PanelId, null>)
+    }
+    if (settings !== null) {
+      openSettings(
+        (validTabs.includes(settings) ? settings : "account") as
+          | "account"
+          | "preferences"
+          | "data",
+      )
+    }
+    if (list !== null) {
+      openListMode()
+    }
+    if (panel || settings !== null || list !== null) {
       const url = new URL(window.location.href)
       url.searchParams.delete("panel")
+      url.searchParams.delete("settings")
+      url.searchParams.delete("list")
       window.history.replaceState({}, "", url.pathname + url.search)
     }
-  }, [openPanel])
+  }, [openPanel, openSettings, openListMode])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -231,7 +257,7 @@ function VenueChatWorkspace() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#f9f9f9] overflow-hidden text-[#1a1c1c]">
+    <div className="flex h-[100dvh] w-full bg-[#f9f9f9] overflow-hidden text-[#1a1c1c]">
       {/* Desktop sidebar */}
       <NavigationSidebar onNewChat={handleNewChat} />
 
@@ -246,40 +272,47 @@ function VenueChatWorkspace() {
       <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
         <TopAppBar onMenuClick={() => setMobileNavOpen(true)} />
 
-        {/* Scrollable canvas */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto vc-scroll w-full">
-          <div className="max-w-[800px] mx-auto w-full px-6 md:px-0">
-            {hasConversation ? (
-              <div className="pt-16 md:pt-6">
-                <ChatThread messages={messages} onSelectVenue={handleSelectVenue} />
+        {listMode ? (
+          /* Inline "List your venue" — chat left, live preview right */
+          <ListVenueWorkspace user={user} onExit={closeListMode} />
+        ) : (
+          <>
+            {/* Scrollable canvas */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto vc-scroll w-full">
+              <div className="max-w-[800px] mx-auto w-full px-6 md:px-0">
+                {hasConversation ? (
+                  <div className="pt-16 md:pt-6">
+                    <ChatThread messages={messages} onSelectVenue={handleSelectVenue} />
+                  </div>
+                ) : (
+                  <WelcomeScreen onSearch={handleSearch} />
+                )}
               </div>
-            ) : (
-              <WelcomeScreen onSearch={handleSearch} />
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Input dock — fixed to bottom of the flex column */}
-        <div className="w-full px-4 md:px-8 py-4 pb-8 flex flex-col items-center gap-1 bg-gradient-to-t from-[#f9f9f9] via-[#f9f9f9]/95 to-transparent">
-          <div className="max-w-[760px] w-full">
-            <ChatInput onSubmit={handleSearch} disabled={isSearching} />
-          </div>
-          <p className="text-xs text-[#926e69] text-center pt-1">
-            Designed with{" "}
-            <span aria-label="love" className="text-[#9e0000]">
-              &hearts;
-            </span>{" "}
-            by{" "}
-            <a
-              href="https://sher.hk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-[#9e0000] hover:underline"
-            >
-              Sheryar Shah
-            </a>
-          </p>
-        </div>
+            {/* Input dock — fixed to bottom of the flex column */}
+            <div className="w-full px-4 md:px-8 py-4 pb-8 flex flex-col items-center gap-1 bg-gradient-to-t from-[#f9f9f9] via-[#f9f9f9]/95 to-transparent">
+              <div className="max-w-[760px] w-full">
+                <ChatInput onSubmit={handleSearch} disabled={isSearching} />
+              </div>
+              <p className="text-xs text-[#926e69] text-center pt-1">
+                Designed with{" "}
+                <span aria-label="love" className="text-[#9e0000]">
+                  &hearts;
+                </span>{" "}
+                by{" "}
+                <a
+                  href="https://sher.hk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#9e0000] hover:underline"
+                >
+                  Sheryar Shah
+                </a>
+              </p>
+            </div>
+          </>
+        )}
       </main>
 
       {/* Venue detail + photos */}
@@ -295,6 +328,66 @@ function VenueChatWorkspace() {
         onRestoreChat={handleRestoreChat}
         onExploreSearch={handleExploreSearch}
       />
+
+      {/* Grok-style centered settings modal */}
+      <SettingsDialog />
+    </div>
+  )
+}
+
+/* ---------- Inline "List your venue" workspace (stays on the homepage) ---------- */
+
+function ListVenueWorkspace({
+  user,
+  onExit,
+}: {
+  user: User | null
+  onExit: () => void
+}) {
+  return (
+    <div className="flex-1 flex flex-col min-h-0 w-full">
+      {/* Slim header bar */}
+      <div className="flex items-center gap-3 px-4 md:px-6 pt-16 md:pt-4 pb-3 shrink-0">
+        <button
+          onClick={onExit}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#e8bdb6] bg-white px-3 py-1.5 text-sm font-semibold text-[#5e3f3a] transition-colors hover:border-[#9e0000] hover:text-[#9e0000]"
+        >
+          <ArrowLeft size={15} />
+          Back to search
+        </button>
+        <div className="min-w-0">
+          <h1 className="text-sm font-bold text-[#1a1c1c] leading-tight">List your venue</h1>
+          <p className="text-xs text-[#8a7a77] truncate">
+            Describe your space — watch the listing build live on the right
+          </p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 px-4 md:px-6 pb-4">
+        {user ? (
+          <AiVenueCreator userId={user.id} onExit={onExit} />
+        ) : (
+          <div className="h-full flex items-center justify-center">
+            <div className="max-w-sm w-full text-center rounded-2xl border border-[#eceae9] bg-white p-8">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#9e0000]/10 text-[#9e0000] mb-4">
+                <LogIn size={22} />
+              </span>
+              <h2 className="text-base font-bold text-[#1a1c1c]">Sign in to list your venue</h2>
+              <p className="text-sm text-[#8a7a77] mt-1.5 leading-relaxed">
+                You&apos;ll need an account so we can save your listing and connect you with
+                event planners.
+              </p>
+              <Link
+                href="/auth/login"
+                className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-[#9e0000] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#7e0000]"
+              >
+                Sign in to continue
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

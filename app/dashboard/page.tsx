@@ -7,6 +7,8 @@ import { AccountForm } from "@/components/dashboard/account-form"
 import { SignOutButton } from "@/components/dashboard/sign-out-button"
 import { createClient } from "@/lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Dashboard | VenueChat",
   description: "Manage your account, saved venues, and enquiries.",

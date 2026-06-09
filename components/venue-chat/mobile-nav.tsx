@@ -12,7 +12,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ open, onClose, onNewChat }: MobileNavProps) {
-  const { openPanel, user } = useApp()
+  const { openPanel, openSettings, user } = useApp()
 
   if (!open) return null
 
@@ -63,13 +63,13 @@ export function MobileNav({ open, onClose, onNewChat }: MobileNavProps) {
 
         <button
           onClick={() => {
-            openPanel("profile")
+            openSettings("account")
             onClose()
           }}
           className="flex items-center gap-2.5 text-left px-3 py-2.5 rounded-lg text-sm font-medium text-[#5e3f3a] hover:bg-[#e8e8e8] transition-colors mt-auto"
         >
           <Settings size={18} />
-          {user ? "Profile & settings" : "Sign in"}
+          {user ? "Settings" : "Sign in"}
         </button>
       </nav>
     </div>

@@ -7,7 +7,6 @@ import { HistoryPanel } from "./panels/history-panel"
 import { ComparePanel } from "./panels/compare-panel"
 import { EnquiriesPanel } from "./panels/enquiries-panel"
 import { ExplorePanel } from "./panels/explore-panel"
-import { ProfilePanel } from "./panels/profile-panel"
 import type { ChatMessage } from "./chat-thread"
 import type { SerpVenue } from "@/lib/serpapi"
 
@@ -17,7 +16,6 @@ const META: Record<string, { title: string; description?: string }> = {
   compare: { title: "Compare venues", description: "Up to 3 side by side" },
   enquiries: { title: "Enquiries", description: "Venues you're in touch with" },
   explore: { title: "Explore Hong Kong", description: "Browse by area or event type" },
-  profile: { title: "Event profile", description: "Defaults & account settings" },
 }
 
 interface FeaturePanelsProps {
@@ -48,7 +46,6 @@ export function FeaturePanels({
         <EnquiriesPanel onSelectVenue={onSelectVenue} />
       )}
       {activePanel === "explore" && <ExplorePanel onSearch={onExploreSearch} />}
-      {activePanel === "profile" && <ProfilePanel />}
     </FeaturePanel>
   )
 }

@@ -3,6 +3,8 @@ import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { PricingCards, type Tier } from "@/components/pricing/pricing-cards"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Pricing | VenueChat",
   description:
