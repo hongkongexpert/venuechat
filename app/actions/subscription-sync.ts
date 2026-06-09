@@ -141,8 +141,8 @@ export async function persistSubscription(args: {
   }
 
   // Keep the owner's per-user account plan in sync. A user is "premium" while
-  // they hold any active/trialing subscription on a premium tier across their
-  // venues; otherwise they fall back to "free".
+  // they hold any active/trialing subscription on a paid tier (anything other
+  // than the free "basic" tier) across their venues; otherwise "free".
   const { data: venueRow } = await admin
     .from("venues")
     .select("owner_id")
@@ -157,14 +157,14 @@ export async function persistSubscription(args: {
     const ids = (ownerVenues ?? []).map((v) => v.id)
     let isPremium = false
     if (ids.length) {
-      const { data: premiumSubs } = await admin
+      const { data: paidSubs } = await admin
         .from("venue_subscriptions")
         .select("status, subscription_tiers!inner(slug)")
         .in("venue_id", ids)
         .in("status", ["active", "trialing"])
-        .eq("subscription_tiers.slug", "premium")
+        .in("subscription_tiers.slug", ["pro", "premium"])
         .limit(1)
-      isPremium = Boolean(premiumSubs && premiumSubs.length)
+      isPremium = Boolean(paidSubs && paidSubs.length)
     }
     await admin
       .from("profiles")
