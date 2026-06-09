@@ -499,26 +499,45 @@ export function AiVenueCreator({
             />
           </div>
           {(atListingLimit || limitReached) && (
-            <div className="mb-3 rounded-xl border border-[#e8bdb6] bg-[#fdf6f4] p-3.5">
-              <div className="flex items-start gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#9e0000]/10 text-[#9e0000]">
-                  <Crown size={16} />
+            <div className="mb-3 overflow-hidden rounded-2xl border border-[#2a1a1a]">
+              {/* Dark header band */}
+              <div className="bg-[#1a0a0a] px-5 py-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#c79100]/15">
+                    <Crown size={16} className="text-[#c79100]" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white tracking-tight">VenueChat Pro</p>
+                    <p className="text-[11px] text-[#a08060] mt-0.5 leading-snug">
+                      Your free listing is live
+                    </p>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full border border-[#c79100]/30 bg-[#c79100]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-[#c79100]">
+                  Upgrade
                 </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-[#1a1c1c]">
-                    You&apos;ve reached your free listing
-                  </p>
-                  <p className="text-xs text-[#5e3f3a] leading-relaxed mt-0.5">
-                    Free accounts include 1 listing. Upgrade to Pro for
-                    multiple listings, up to {getPlanLimits("pro").maxPhotosPerListing}{" "}
-                    photos each, full Google Maps import and featured placement.
-                  </p>
+              </div>
+              {/* Light body */}
+              <div className="bg-[#fdf8f5] px-5 py-4">
+                <p className="text-xs font-medium text-[#3d2a20] leading-relaxed">
+                  Unlock{" "}
+                  <span className="font-bold text-[#9e0000]">multiple listings</span>,{" "}
+                  up to {getPlanLimits("pro").maxPhotosPerListing} photos per venue, full
+                  Google Maps import and priority placement in search.
+                </p>
+                <div className="mt-3 flex items-center gap-2">
                   <button
                     onClick={() => router.push("/pricing")}
-                    className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#9e0000] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#7e0000] transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a0a0a] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#2d1010] transition-colors"
                   >
-                    <Crown size={13} />
+                    <Crown size={12} className="text-[#c79100]" />
                     Upgrade to Pro
+                  </button>
+                  <button
+                    onClick={() => router.push("/pricing")}
+                    className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-[#8a7a77] hover:text-[#5e3f3a] transition-colors"
+                  >
+                    See plans
                   </button>
                 </div>
               </div>
